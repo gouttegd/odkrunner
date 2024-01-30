@@ -1,0 +1,21 @@
+# Autotools-generated files
+Makefile.in
+Makefile
+autom4te.cache
+config.h.in*
+config.h
+config.log
+config.status
+config
+configure
+stamp-*
+
+# Autoconf macros files
+*.m4
+
+# Built files
+src/*.o
+src/.deps
+lib/*.o
+lib/.deps
+odkrun
