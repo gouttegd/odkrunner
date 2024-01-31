@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #if defined(HAVE_SYS_WAIT_H)
@@ -57,7 +58,30 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->work_directory = "/work/src/ontology";
     cfg->bindings = NULL;
     cfg->n_bindings = 0;
+    cfg->env_vars = NULL;
+    cfg->n_env_vars = 0;
     cfg->flags = 0;
+}
+
+void
+odk_free_config(odk_run_config_t *cfg)
+{
+    assert(cfg != NULL);
+
+    if ( cfg-> bindings ) {
+        for ( int i = 0; i < cfg->n_bindings; i++ ) {
+            free((char *)cfg->bindings[i].host_directory);
+        }
+        free(cfg->bindings);
+        cfg->bindings = NULL;
+        cfg->n_bindings = 0;
+    }
+
+    if ( cfg->env_vars ) {
+        free(cfg->env_vars);
+        cfg->env_vars = NULL;
+        cfg->n_env_vars = 0;
+    }
 }
 
 void
@@ -74,6 +98,27 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
     cfg->bindings[cfg->n_bindings++].container_directory = dst;
 }
 
+void
+odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
+{
+    assert(cfg != NULL);
+    assert(name != NULL);
+
+    for ( int i = 0; i < cfg->n_env_vars; i++ ) {
+        if ( strcmp(cfg->env_vars[i].name, name) == 0 ) {
+            cfg->env_vars[i].value = value;
+            return;
+        }
+    }
+
+    if ( cfg->n_env_vars % 10 == 0 ) {
+        cfg->env_vars = xrealloc(cfg->env_vars, sizeof(odk_env_var_t) * (cfg->n_env_vars + 10));
+    }
+
+    cfg->env_vars[cfg->n_env_vars].name = name;
+    cfg->env_vars[cfg->n_env_vars++].value = value;
+}
+
 int
 odk_run_command(odk_run_config_t *cfg, char **command)
 {
@@ -84,7 +129,7 @@ odk_run_command(odk_run_config_t *cfg, char **command)
         char **argv, **cursor;
         size_t n, i = 0;
 
-        n = 9 + (cfg->n_bindings * 2);
+        n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
         if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
             n += 3;
         }
@@ -103,6 +148,13 @@ odk_run_command(odk_run_config_t *cfg, char **command)
             argv[i++] = "-v";
             xasprintf(&argv[i++], "%s:%s", cfg->bindings[j].host_directory, cfg->bindings[j].container_directory);
         }
+        for ( int j = 0; j < cfg->n_env_vars; j++ ) {
+            if ( cfg->env_vars[j].value != NULL ) {
+                argv[i++] = "-e";
+                xasprintf(&argv[i++], "%s=%s", cfg->env_vars[j].name, cfg->env_vars[j].value);
+            }
+        }
+
         xasprintf(&argv[i++], "%s:%s", cfg->image_name, cfg->image_tag);
 
         if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
@@ -136,6 +188,12 @@ odk_run_command(odk_run_config_t *cfg, char **command)
     for ( int i = 0; i < cfg->n_bindings; i++ ) {
         sb_addf(&sb, " -v %s:%s", cfg->bindings[i].host_directory, cfg->bindings[i].container_directory);
     }
+    for ( int i = 0; i < cfg->n_env_vars; i++ ) {
+        if ( cfg->env_vars[i].value != NULL ) {
+            sb_addf(&sb, "-e %s=\"%s\"", cfg->env_vars[i].name, cfg->env_vars[i].value);
+        }
+    }
+
     sb_addf(&sb, " %s:%s", cfg->image_name, cfg->image_tag);
 
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {

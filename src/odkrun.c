@@ -90,6 +90,7 @@ int
 main(int argc, char **argv)
 {
     char c;
+    int ret;
     odk_run_config_t cfg;
 
     struct option options[] = {
@@ -123,6 +124,7 @@ main(int argc, char **argv)
 
         case 'd':
             cfg.flags |= ODK_FLAG_TIMEDEBUG;
+            odk_add_env_var(&cfg, "ODK_DEBUG", "yes");
             break;
 
         case 'i':
@@ -140,8 +142,11 @@ main(int argc, char **argv)
     }
 
     odk_add_binding(&cfg, "../..", "/work");
+    odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", "-Xmx6G");
+    odk_add_env_var(&cfg, "JAVA_OPTS", "-Xmx6G");
 
-    odk_run_command(&cfg, &argv[optind]);
+    ret = odk_run_command(&cfg, &argv[optind]);
+    odk_free_config(&cfg);
 
-    return EXIT_SUCCESS;
+    return ret;
 }

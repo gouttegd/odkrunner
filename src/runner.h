@@ -38,12 +38,19 @@ typedef struct odk_bind_config {
     const char *container_directory;
 } odk_bind_config_t;
 
+typedef struct odk_env_var {
+    const char *name;
+    const char *value;
+} odk_env_var_t;
+
 typedef struct odk_run_config {
     const char         *image_name;
     const char         *image_tag;
     const char         *work_directory;
     odk_bind_config_t  *bindings;
     size_t              n_bindings;
+    odk_env_var_t      *env_vars;
+    size_t              n_env_vars;
     unsigned            flags;
 } odk_run_config_t;
 
@@ -57,7 +64,13 @@ void
 odk_init_config(odk_run_config_t *cfg);
 
 void
+odk_free_config(odk_run_config_t *cfg);
+
+void
 odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst);
+
+void
+odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value);
 
 int
 odk_run_command(odk_run_config_t *cfg, char **command);
