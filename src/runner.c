@@ -33,22 +33,14 @@
 #endif
 
 #include "runner.h"
+#include "procutil.h"
 
 #include <stdio.h>
-#include <limits.h>
-#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#if defined(HAVE_SYS_WAIT_H)
-#include <unistd.h>
-#include <sys/wait.h>
-#elif defined(HAVE_WINDOWS_H)
-#include <windows.h>
-#include <sbuffer.h>
-#endif
-
 #include <xmem.h>
+#include <memreg.h>
 
 void
 odk_init_config(odk_run_config_t *cfg)
@@ -122,105 +114,52 @@ odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
 int
 odk_run_command(odk_run_config_t *cfg, char **command)
 {
-#if defined(HAVE_SYS_WAIT_H)
-    pid_t pid;
+    int rc;
+    size_t n, i = 0;
+    char **argv, **cursor;
+    mem_registry_t mr = { 0 };
 
-    if ( (pid = fork()) == 0 ) {
-        char **argv, **cursor;
-        size_t n, i = 0;
-
-        n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
-        if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
-            n += 3;
-        }
-        for ( cursor = &command[0]; *cursor; cursor++ ) {
-            n += 1;
-        }
-        argv = xmalloc(sizeof(char *) * n);
-
-        argv[i++] = "docker";
-        argv[i++] = "run";
-        argv[i++] = "--rm";
-        argv[i++] = "-ti";
-        argv[i++] = "-w";
-        argv[i++] = (char *)cfg->work_directory;
-        for ( int j = 0; j < cfg->n_bindings; j++ ) {
-            argv[i++] = "-v";
-            xasprintf(&argv[i++], "%s:%s", cfg->bindings[j].host_directory, cfg->bindings[j].container_directory);
-        }
-        for ( int j = 0; j < cfg->n_env_vars; j++ ) {
-            if ( cfg->env_vars[j].value != NULL ) {
-                argv[i++] = "-e";
-                xasprintf(&argv[i++], "%s=%s", cfg->env_vars[j].name, cfg->env_vars[j].value);
-            }
-        }
-
-        xasprintf(&argv[i++], "%s:%s", cfg->image_name, cfg->image_tag);
-
-        if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
-            argv[i++] = "/usr/bin/time";
-            argv[i++] = "-f";
-            argv[i++] = "### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb";
-        }
-
-        for ( cursor = &command[0]; *cursor; cursor++ ) {
-            argv[i++] = *cursor;
-        }
-        argv[i] = NULL;
-
-        execvp("docker", argv);
-
-    } else if ( pid > 0 ) {
-        int status;
-        waitpid(pid, &status, 0);
-        if ( WIFEXITED(status) ) {
-            return WEXITSTATUS(status);
-        }
-    }
-#elif defined(HAVE_WINDOWS_H)
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    string_buffer_t sb;
-    char **cursor;
-
-    sb_init(&sb, 512);
-    sb_addf(&sb, "docker run --rm -ti -w %s", cfg->work_directory);
-    for ( int i = 0; i < cfg->n_bindings; i++ ) {
-        sb_addf(&sb, " -v %s:%s", cfg->bindings[i].host_directory, cfg->bindings[i].container_directory);
-    }
-    for ( int i = 0; i < cfg->n_env_vars; i++ ) {
-        if ( cfg->env_vars[i].value != NULL ) {
-            sb_addf(&sb, "-e %s=\"%s\"", cfg->env_vars[i].name, cfg->env_vars[i].value);
-        }
-    }
-
-    sb_addf(&sb, " %s:%s", cfg->image_name, cfg->image_tag);
-
+    /* Number of tokens in the command line */
+    n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
-        sb_add(&sb, " /usr/bin/time -f \"### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb\"");
+        n += 3;
     }
-
     for ( cursor = &command[0]; *cursor; cursor++ ) {
-        sb_addc(&sb, ' ');
-        sb_add(&sb, *cursor);
+        n += 1;
     }
 
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    ZeroMemory(&pi, sizeof(pi));
-
-    if ( CreateProcess(NULL, sb_get_copy(&sb), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi) ) {
-        DWORD status;
-
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        GetExitCodeProcess(pi.hProcess, &status);
-
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-
-        return status;
+    /* Assembling the command line */
+    argv = mr_alloc(&mr, sizeof(char *) * n);
+    argv[i++] = "docker";
+    argv[i++] = "run";
+    argv[i++] = "--rm";
+    argv[i++] = "-ti";
+    argv[i++] = "-w";
+    argv[i++] = (char *)cfg->work_directory;
+    for ( int j = 0; j < cfg->n_bindings; j++ ) {
+        argv[i++] = "-v";
+        argv[i++] = mr_sprintf(&mr, "%s:%s", cfg->bindings[j].host_directory, cfg->bindings[j].container_directory);
     }
-#endif
+    for ( int j = 0; j < cfg->n_env_vars; j++ ) {
+        if ( cfg->env_vars[j].value != NULL ) {
+            argv[i++] = "-e";
+            argv[i++] = mr_sprintf(&mr, "%s=%s", cfg->env_vars[j].name, cfg->env_vars[j].value);
+        }
+    }
+    argv[i++] = mr_sprintf(&mr, "%s:%s", cfg->image_name, cfg->image_tag);
+    if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
+        argv[i++] = "/usr/bin/time";
+        argv[i++] = "-f";
+        argv[i++] = "### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb";
+    }
+    for ( cursor = &command[0]; *cursor; cursor++ ) {
+        argv[i++] = *cursor;
+    }
+    argv[i] = NULL;
 
-    return -1;
+    /* Execute */
+    rc = spawn_process(argv);
+    mr_free(&mr);
+
+    return rc;
 }

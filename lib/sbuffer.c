@@ -172,7 +172,7 @@ sb_addn(string_buffer_t *s, const char *buffer, size_t len)
         GROW(s, len + 1);
 
     if ( ! CHECK_ERROR(s) ) {
-        strncat(CURSOR(s), buffer, len);
+        strncpy(CURSOR(s), buffer, len);
         s->len += len;
     }
 
