@@ -62,6 +62,8 @@ Start a ODK container.\n");
     -t, --tag TAG       Use the specified image tag. The default is the\n\
                         'latest' tag.\n\
     -l, --lite          Use the 'obolibrary/odklite' image.\n\
+    -s, --singularity   Run the container with Singularity\n\
+                        rather than Docker.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -92,15 +94,17 @@ main(int argc, char **argv)
     char c;
     int ret;
     odk_run_config_t cfg;
+    odk_run_command backend = odk_run_with_docker;
 
     struct option options[] = {
-        { "help",       0, NULL, 'h' },
-        { "version",    0, NULL, 'v' },
-        { "debug",      0, NULL, 'd' },
-        { "image",      1, NULL, 'i' },
-        { "tag",        1, NULL, 't' },
-        { "lite",       0, NULL, 'l' },
-        { NULL,         0, NULL, 0 }
+        { "help",           0, NULL, 'h' },
+        { "version",        0, NULL, 'v' },
+        { "debug",          0, NULL, 'd' },
+        { "image",          1, NULL, 'i' },
+        { "tag",            1, NULL, 't' },
+        { "lite",           0, NULL, 'l' },
+        { "singularity",    0, NULL, 's' },
+        { NULL,             0, NULL, 0 }
     };
 
     setprogname(argv[0]);
@@ -108,7 +112,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "hvdi:t:l", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "hvdi:t:ls", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
@@ -138,6 +142,10 @@ main(int argc, char **argv)
         case 'l':
             cfg.image_name = "obolibrary/odklite";
             break;
+
+        case 's':
+            backend = odk_run_with_singularity;
+            break;
         }
     }
 
@@ -145,7 +153,7 @@ main(int argc, char **argv)
     odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", "-Xmx6G");
     odk_add_env_var(&cfg, "JAVA_OPTS", "-Xmx6G");
 
-    ret = odk_run_command(&cfg, &argv[optind]);
+    ret = backend(&cfg, &argv[optind]);
     odk_free_config(&cfg);
 
     return ret;

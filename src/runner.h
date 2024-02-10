@@ -54,6 +54,8 @@ typedef struct odk_run_config {
     unsigned            flags;
 } odk_run_config_t;
 
+typedef int (*odk_run_command)(odk_run_config_t *, char**);
+
 #define ODK_FLAG_TIMEDEBUG  0x0001
 
 #ifdef __cplusplus
@@ -73,7 +75,10 @@ void
 odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value);
 
 int
-odk_run_command(odk_run_config_t *cfg, char **command);
+odk_run_with_docker(odk_run_config_t *cfg, char **command);
+
+int
+odk_run_with_singularity(odk_run_config_t *cfg, char **command);
 
 #ifdef __cplusplus
 }
