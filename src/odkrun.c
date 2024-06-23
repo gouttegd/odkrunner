@@ -39,6 +39,8 @@
 #include <err.h>
 
 #include "runner.h"
+#include "backend-docker.h"
+#include "backend-singularity.h"
 
 
 /* Help and information about the program. */
@@ -94,7 +96,8 @@ main(int argc, char **argv)
     char c;
     int ret;
     odk_run_config_t cfg;
-    odk_run_command backend = odk_run_with_docker;
+    odk_backend_t backend = { 0 };
+    odk_backend_init backend_init = odk_backend_docker_init;
 
     struct option options[] = {
         { "help",           0, NULL, 'h' },
@@ -144,7 +147,7 @@ main(int argc, char **argv)
             break;
 
         case 's':
-            backend = odk_run_with_singularity;
+            backend_init = odk_backend_singularity_init;
             break;
         }
     }
@@ -153,8 +156,11 @@ main(int argc, char **argv)
     odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", "-Xmx6G");
     odk_add_env_var(&cfg, "JAVA_OPTS", "-Xmx6G");
 
-    ret = backend(&cfg, &argv[optind]);
+    backend_init(&backend);
+    ret = backend.run(&backend, &cfg, &argv[optind]);
+
     odk_free_config(&cfg);
+    backend.close(&backend);
 
     return ret;
 }

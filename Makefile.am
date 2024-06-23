@@ -11,6 +11,9 @@ convlib_sources = lib/memreg.c lib/memreg.h \
 odkrun_SOURCES = src/odkrun.c \
 		 src/procutil.c src/procutil.h \
 		 src/runner.c src/runner.h \
+		 src/backend.h \
+		 src/backend-docker.c src/backend-docker.h \
+		 src/backend-singularity.c src/backend-singularity.h \
 		 $(convlib_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib
