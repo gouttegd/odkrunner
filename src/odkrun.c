@@ -41,6 +41,7 @@
 #include "runner.h"
 #include "backend-docker.h"
 #include "backend-singularity.h"
+#include "backend-native.h"
 
 
 /* Help and information about the program. */
@@ -66,6 +67,7 @@ Start a ODK container.\n");
     -l, --lite          Use the 'obolibrary/odklite' image.\n\
     -s, --singularity   Run the container with Singularity\n\
                         rather than Docker.\n\
+    -n, --native        Run in the native system, not in a container.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -107,6 +109,7 @@ main(int argc, char **argv)
         { "tag",            1, NULL, 't' },
         { "lite",           0, NULL, 'l' },
         { "singularity",    0, NULL, 's' },
+        { "native",         0, NULL, 'n' },
         { NULL,             0, NULL, 0 }
     };
 
@@ -115,7 +118,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "hvdi:t:ls", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "hvdi:t:lsn", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
@@ -149,6 +152,10 @@ main(int argc, char **argv)
         case 's':
             backend_init = odk_backend_singularity_init;
             break;
+
+        case 'n':
+            backend_init = odk_backend_native_init;
+            break;
         }
     }
 
@@ -156,7 +163,9 @@ main(int argc, char **argv)
     odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", "-Xmx6G");
     odk_add_env_var(&cfg, "JAVA_OPTS", "-Xmx6G");
 
-    backend_init(&backend);
+    if ( backend_init(&backend) == -1 ) {
+        err(EXIT_FAILURE, "Cannot initialise backend");
+    }
     ret = backend.run(&backend, &cfg, &argv[optind]);
 
     odk_free_config(&cfg);

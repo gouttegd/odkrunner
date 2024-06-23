@@ -14,6 +14,7 @@ odkrun_SOURCES = src/odkrun.c \
 		 src/backend.h \
 		 src/backend-docker.c src/backend-docker.h \
 		 src/backend-singularity.c src/backend-singularity.h \
+		 src/backend-native.c src/backend-native.h \
 		 $(convlib_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib
