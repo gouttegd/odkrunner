@@ -14,8 +14,7 @@ AC_PROG_CC
 dnl Check for some non-ubiquitous functions
 ICP_CHECK_NOTCH_FUNCS
 
-# We use the absence of sys/wait as an indicator
-# that we are likely compiling for Windows.
+dnl Check for some system headers
 AC_CHECK_HEADERS([sys/wait.h])
 AC_CHECK_HEADERS([windows.h])
 
@@ -39,7 +38,14 @@ AC_ARG_WITH([min-osx-version],
 dnl Host-based tweaks
 AC_CANONICAL_HOST
 AS_CASE([$host],
-        [*-*-darwin*], [CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"])
+        [*-*-linux-*], [AC_DEFINE([ODK_RUNNER_LINUX], [1], [GNU/Linux version])
+                        ODK_RUNNER_PLATFORM=linux],
+        [*-*-darwin*], [CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"
+                        AC_DEFINE([ODK_RUNNER_MACOS], [1], [macOS version])
+                        ODK_RUNNER_PLATFORM=macos],
+        [*-*-mingw32], [AC_DEFINE([ODK_RUNNER_WINDOWS], [1], [Windows version])
+                        ODK_RUNNER_PLATFORM=windows],
+        [AC_MSG_ERROR(["Unsupported host: ${host}"])])
 
 dnl Output files
 AC_CONFIG_FILES([Makefile])
@@ -51,6 +57,7 @@ echo "
 ${PACKAGE_NAME} version ${PACKAGE_VERSION}
 Configuration complete
 
+Host:               '${host}'
 Compiler:           '${CC} ${CFLAGS} ${CPPFLAGS}'
 
 "
