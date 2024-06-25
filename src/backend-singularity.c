@@ -38,6 +38,7 @@
 #include <sbuffer.h>
 
 #include "procutil.h"
+#include "util.h"
 
 static int
 run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
@@ -129,6 +130,8 @@ odk_backend_singularity_init(odk_backend_t *backend)
 {
     backend->run = run;
     backend->close = close;
+
+    backend->info.total_memory = get_physical_memory();
 
     return 0;
 }

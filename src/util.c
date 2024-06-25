@@ -28,29 +28,55 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ICP20240622_BACKEND_H
-#define ICP20240622_BACKEND_H
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#include "runner.h"
+#include "util.h"
 
-typedef struct odk_backend_info {
-    unsigned long total_memory;
-} odk_backend_info_t;
+#if defined(ODK_RUNNER_LINUX)
+#include <sys/sysinfo.h>
 
-typedef struct odk_backend odk_backend_t;
+#elif defined(ODK_RUNNER_MACOS)
+#include <sys/sysctl.h>
 
-struct odk_backend {
-    odk_backend_info_t info;
+#elif defined(ODK_RUNNER_WINDOWS)
+#include <windows.h>
 
-    /* Executes a ODK command */
-    int   (*run)(odk_backend_t *, odk_run_config_t *, char **);
+#endif
 
-    /* Frees resources associated with the backend */
-    int   (*close)(odk_backend_t *);
-};
+/**
+ * Gets the amount of physical memory available.
+ *
+ * @return The total physical memory (in bytes), or 0 if we couldn't get
+ *         that information.
+ */
+size_t
+get_physical_memory(void)
+{
+    size_t phys_mem = 0;
 
-/* Initialises the backend. */
-typedef int (*odk_backend_init)(odk_backend_t *);
+#if defined(ODK_RUNNER_LINUX)
+    struct sysinfo info;
 
+    if ( sysinfo(&info) != -1 )
+        phys_mem = info.totalram;
 
-#endif /* !ICP20240622_BACKEND_H */
+#elif defined(ODK_RUNNER_MACOS)
+    int mib_name[] = { CTL_HW, HW_MEMSIZE };
+    size_t len = sizeof(phys_mem);
+
+    if ( sysctl(mib_name, 2, &phys_mem, &len, NULL, 0) == -1 )
+        phys_mem = 0;
+
+#elif defined(ODK_RUNNER_WINDOWS)
+    MEMORYSTATUSEX statex;
+
+    statex.dwLength = sizeof(statex);
+    if ( GlobalMemoryStatusEx(&statex) != 0 )
+        phys_mem = statex.ullTotalPhys;
+
+#endif
+
+    return phys_mem;
+}

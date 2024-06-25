@@ -38,6 +38,8 @@
 #include <locale.h>
 #include <err.h>
 
+#include <memreg.h>
+
 #include "runner.h"
 #include "backend-docker.h"
 #include "backend-singularity.h"
@@ -160,12 +162,20 @@ main(int argc, char **argv)
     }
 
     odk_add_binding(&cfg, "../..", "/work");
-    odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", "-Xmx6G");
-    odk_add_env_var(&cfg, "JAVA_OPTS", "-Xmx6G");
 
     if ( backend_init(&backend) == -1 ) {
         err(EXIT_FAILURE, "Cannot initialise backend");
     }
+
+    if ( backend.info.total_memory > 0 ) {
+        unsigned long java_mem = backend.info.total_memory * 0.9;
+        if ( java_mem > 1024*1024*1024 ) {
+            char *java_opt = mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024));
+            odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", java_opt);
+            odk_add_env_var(&cfg, "JAVA_OPTS", java_opt);
+        }
+    }
+
     ret = backend.run(&backend, &cfg, &argv[optind]);
 
     odk_free_config(&cfg);

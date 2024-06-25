@@ -37,6 +37,7 @@
 #include <xmem.h>
 
 #include "procutil.h"
+#include "util.h"
 
 #if !defined(ODK_RUNNER_WINDOWS)
 
@@ -105,6 +106,8 @@ odk_backend_native_init(odk_backend_t *backend)
 #else
     backend->run = run;
     backend->close = close;
+
+    backend->info.total_memory = get_physical_memory();
 
     return 0;
 #endif

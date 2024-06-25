@@ -28,29 +28,20 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ICP20240622_BACKEND_H
-#define ICP20240622_BACKEND_H
+#ifndef ICP20240625_UTIL_H
+#define ICP20240625_UTIL_H
 
-#include "runner.h"
+#include <stdlib.h>
 
-typedef struct odk_backend_info {
-    unsigned long total_memory;
-} odk_backend_info_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct odk_backend odk_backend_t;
+size_t
+get_physical_memory(void);
 
-struct odk_backend {
-    odk_backend_info_t info;
+#ifdef __cplusplus
+}
+#endif
 
-    /* Executes a ODK command */
-    int   (*run)(odk_backend_t *, odk_run_config_t *, char **);
-
-    /* Frees resources associated with the backend */
-    int   (*close)(odk_backend_t *);
-};
-
-/* Initialises the backend. */
-typedef int (*odk_backend_init)(odk_backend_t *);
-
-
-#endif /* !ICP20240622_BACKEND_H */
+#endif /* !ICP20240625_UTIL_H */

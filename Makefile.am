@@ -10,6 +10,7 @@ convlib_sources = lib/memreg.c lib/memreg.h \
 
 odkrun_SOURCES = src/odkrun.c \
 		 src/procutil.c src/procutil.h \
+		 src/util.c src/util.h \
 		 src/runner.c src/runner.h \
 		 src/backend.h \
 		 src/backend-docker.c src/backend-docker.h \

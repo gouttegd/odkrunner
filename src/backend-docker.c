@@ -34,6 +34,9 @@
 
 #include "backend-docker.h"
 
+#include <stdio.h>
+#include <errno.h>
+
 #include <memreg.h>
 
 #include "procutil.h"
@@ -101,12 +104,33 @@ close(odk_backend_t *backend)
     return 0;
 }
 
+static int
+get_total_memory(odk_backend_info_t *info)
+{
+    FILE *p;
+    int ret = -1;
+
+    if ( (p = popen("docker info --format={{.MemTotal}}", "r")) != NULL ) {
+        if ( fscanf(p, "%lu", &(info->total_memory)) == 1 )
+            ret = 0;
+        else
+            errno = ESRCH;
+        pclose(p);
+    }
+
+    return ret;
+}
+
 
 int
 odk_backend_docker_init(odk_backend_t *backend)
 {
+    int ret;
+
     backend->run = run;
     backend->close = close;
 
-    return 0;
+    ret = get_total_memory(&(backend->info));
+
+    return ret;
 }
