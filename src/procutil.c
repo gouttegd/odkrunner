@@ -59,9 +59,8 @@ spawn_process(char **argv)
         int status;
 
         if ( waitpid(pid, &status, 0) != -1 ) {
-            if ( WIFEXITED(status) ) {
+            if ( WIFEXITED(status) )
                 return WEXITSTATUS(status);
-            }
         }
     }
 
@@ -75,11 +74,10 @@ spawn_process(char **argv)
     sb_add(&sb, argv[0]);
     for ( cursor = &argv[1]; *cursor; cursor++ ) {
         sb_addc(&sb, ' ');
-        if ( strchr(*cursor, ' ') ) {
+        if ( strchr(*cursor, ' ') )
             sb_addf(&sb, "\"%s\"", *cursor);
-        } else {
+        else
             sb_add(&sb, *cursor);
-        }
     }
     cmd = sb_get_copy(&sb);
     free(sb.buffer);

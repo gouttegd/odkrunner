@@ -154,10 +154,9 @@ mr_realloc(mem_registry_t *reg, void *ptr, size_t size)
     p = realloc(ptr, size);
     if ( p ) {
 #endif
-        if ( i == reg->count ) {
+        if ( i == reg->count )
             /* The buffer was not registered, do it now */
             p = mr_register(reg, p, MEMREG_FREE_ON_ERROR);
-        }
         else
             reg->items[i] = p;
 #ifndef FAIL_ON_ENOMEM

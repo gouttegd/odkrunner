@@ -62,9 +62,8 @@ odk_free_config(odk_run_config_t *cfg)
     assert(cfg != NULL);
 
     if ( cfg-> bindings ) {
-        for ( int i = 0; i < cfg->n_bindings; i++ ) {
+        for ( int i = 0; i < cfg->n_bindings; i++ )
             free((char *)cfg->bindings[i].host_directory);
-        }
         free(cfg->bindings);
         cfg->bindings = NULL;
         cfg->n_bindings = 0;
@@ -104,9 +103,8 @@ odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
         }
     }
 
-    if ( cfg->n_env_vars % 10 == 0 ) {
+    if ( cfg->n_env_vars % 10 == 0 )
         cfg->env_vars = xrealloc(cfg->env_vars, sizeof(odk_env_var_t) * (cfg->n_env_vars + 10));
-    }
 
     cfg->env_vars[cfg->n_env_vars].name = name;
     cfg->env_vars[cfg->n_env_vars++].value = value;

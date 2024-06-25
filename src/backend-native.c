@@ -50,11 +50,10 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 
     /* Setting up the environment */
     for ( int j = 0; j < cfg->n_env_vars; j++ ) {
-        if ( cfg->env_vars[j].value != NULL ) {
+        if ( cfg->env_vars[j].value != NULL )
             setenv(cfg->env_vars[j].name, cfg->env_vars[j].value, 1);
-        } else {
+        else
             unsetenv(cfg->env_vars[j].name);
-        }
     }
 
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
@@ -63,25 +62,22 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
         char **argv, **cursor;
         size_t n = 3, i = 0;
 
-        for ( cursor = &command[0]; *cursor; cursor++ ) {
+        for ( cursor = &command[0]; *cursor; cursor++ )
             n += 1;
-        }
 
         argv = xmalloc(sizeof(char *) * n);
         argv[i++] = "/usr/bin/time";
         argv[i++] = "-f";
         argv[i++] = "### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb";
-        for ( cursor = &command[0]; *cursor; cursor++ ) {
+        for ( cursor = &command[0]; *cursor; cursor++ )
             argv[i++] = *cursor;
-        }
         argv[i] = NULL;
 
         rc = spawn_process(argv);
         free(argv);
-    } else {
+    } else
         /* We can use the provided command line as it is. */
         rc = spawn_process(command);
-    }
 
     return rc;
 }

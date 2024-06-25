@@ -84,9 +84,8 @@ realpath(const char *restrict path, char *restrict resolved_path)
                 errno = get_errno();
             }
         }
-    } else {
+    } else
         errno = get_errno();
-    }
 
     return resolved_path;
 }

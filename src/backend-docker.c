@@ -53,12 +53,10 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 
     /* Number of tokens in the command line */
     n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
-    if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
+    if ( cfg->flags & ODK_FLAG_TIMEDEBUG )
         n += 3;
-    }
-    for ( cursor = &command[0]; *cursor; cursor++ ) {
+    for ( cursor = &command[0]; *cursor; cursor++ )
         n += 1;
-    }
 
     /* Assembling the command line */
     argv = mr_alloc(&mr, sizeof(char *) * n);
@@ -84,9 +82,8 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
         argv[i++] = "-f";
         argv[i++] = "### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb";
     }
-    for ( cursor = &command[0]; *cursor; cursor++ ) {
+    for ( cursor = &command[0]; *cursor; cursor++ )
         argv[i++] = *cursor;
-    }
     argv[i] = NULL;
 
     /* Execute */

@@ -163,9 +163,8 @@ main(int argc, char **argv)
 
     odk_add_binding(&cfg, "../..", "/work");
 
-    if ( backend_init(&backend) == -1 ) {
+    if ( backend_init(&backend) == -1 )
         err(EXIT_FAILURE, "Cannot initialise backend");
-    }
 
     if ( backend.info.total_memory > 0 ) {
         unsigned long java_mem = backend.info.total_memory * 0.9;
