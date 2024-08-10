@@ -70,6 +70,7 @@ Start a ODK container.\n");
     -s, --singularity   Run the container with Singularity\n\
                         rather than Docker.\n\
     -n, --native        Run in the native system, not in a container.\n\
+    --root              When running in a container, run as a superuser.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -97,8 +98,8 @@ See the COPYING file for more details.\n\
 int
 main(int argc, char **argv)
 {
-    char c;
-    int ret;
+    int c;
+    int ret = 0;
     odk_run_config_t cfg;
     odk_backend_t backend = { 0 };
     odk_backend_init backend_init = odk_backend_docker_init;
@@ -112,6 +113,7 @@ main(int argc, char **argv)
         { "lite",           0, NULL, 'l' },
         { "singularity",    0, NULL, 's' },
         { "native",         0, NULL, 'n' },
+        { "root",           0, NULL, 256 },
         { NULL,             0, NULL, 0 }
     };
 
@@ -158,6 +160,10 @@ main(int argc, char **argv)
         case 'n':
             backend_init = odk_backend_native_init;
             break;
+
+        case 256:
+            cfg.flags |= ODK_FLAG_RUNASROOT;
+            break;
         }
     }
 
@@ -175,7 +181,11 @@ main(int argc, char **argv)
         }
     }
 
-    ret = backend.run(&backend, &cfg, &argv[optind]);
+    if ( backend.prepare )
+        ret = backend.prepare(&backend, &cfg);
+
+    if ( ret == 0 )
+        ret = backend.run(&backend, &cfg, &argv[optind]);
 
     odk_free_config(&cfg);
     backend.close(&backend);

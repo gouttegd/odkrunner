@@ -34,11 +34,34 @@
 
 #include "backend-singularity.h"
 
+#if defined(ODK_RUNNER_LINUX)
+#include <unistd.h> /* for getuid/getgid */
+#endif
+
 #include <memreg.h>
 #include <sbuffer.h>
 
 #include "procutil.h"
 #include "util.h"
+
+static int
+prepare(odk_backend_t *backend, odk_run_config_t *cfg)
+{
+    if ( (cfg->flags & ODK_FLAG_RUNASROOT) == 0 ) {
+#if defined(ODK_RUNNER_LINUX)
+        char *user_id = mr_sprintf(NULL, "%u", getuid());
+        char *group_id = mr_sprintf(NULL, "%u", getgid());
+#else
+        char *user_id = "1000";
+        char *group_id = "1000";
+#endif
+
+        odk_add_env_var(cfg, "ODK_USER_ID", user_id);
+        odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
+    }
+
+    return 0;
+}
 
 static int
 run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
@@ -111,7 +134,7 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 }
 
 static
-int close(odk_backend_t *backend)
+int close_backend(odk_backend_t *backend)
 {
     (void) backend;
 
@@ -121,8 +144,9 @@ int close(odk_backend_t *backend)
 int
 odk_backend_singularity_init(odk_backend_t *backend)
 {
+    backend->prepare = prepare;
     backend->run = run;
-    backend->close = close;
+    backend->close = close_backend;
 
     backend->info.total_memory = get_physical_memory();
 

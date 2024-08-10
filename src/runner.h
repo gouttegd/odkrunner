@@ -57,6 +57,7 @@ typedef struct odk_run_config {
 typedef int (*odk_run_command)(odk_run_config_t *, char**);
 
 #define ODK_FLAG_TIMEDEBUG  0x0001
+#define ODK_FLAG_RUNASROOT  0x0002
 
 #ifdef __cplusplus
 extern "C" {

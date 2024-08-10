@@ -37,9 +37,32 @@
 #include <stdio.h>
 #include <errno.h>
 
+#if defined(ODK_RUNNER_LINUX)
+#include <unistd.h> /* for getuid/getgid */
+#endif
+
 #include <memreg.h>
 
 #include "procutil.h"
+
+static int
+prepare(odk_backend_t *backend, odk_run_config_t *cfg)
+{
+    if ( (cfg->flags & ODK_FLAG_RUNASROOT) == 0 ) {
+#if defined(ODK_RUNNER_LINUX)
+        char *user_id = mr_sprintf(NULL, "%u", getuid());
+        char *group_id = mr_sprintf(NULL, "%u", getgid());
+#else
+        char *user_id = "1000";
+        char *group_id = "1000";
+#endif
+
+        odk_add_env_var(cfg, "ODK_USER_ID", user_id);
+        odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
+    }
+
+    return 0;
+}
 
 static int
 run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
@@ -94,7 +117,7 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 }
 
 static int
-close(odk_backend_t *backend)
+close_backend(odk_backend_t *backend)
 {
     (void) backend;
 
@@ -124,8 +147,9 @@ odk_backend_docker_init(odk_backend_t *backend)
 {
     int ret;
 
+    backend->prepare = prepare;
     backend->run = run;
-    backend->close = close;
+    backend->close = close_backend;
 
     ret = get_total_memory(&(backend->info));
 

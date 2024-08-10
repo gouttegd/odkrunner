@@ -42,6 +42,9 @@ typedef struct odk_backend odk_backend_t;
 struct odk_backend {
     odk_backend_info_t info;
 
+    /* Updates the runner configuration with backend-specific infos */
+    int   (*prepare)(odk_backend_t *, odk_run_config_t *);
+
     /* Executes a ODK command */
     int   (*run)(odk_backend_t *, odk_run_config_t *, char **);
 

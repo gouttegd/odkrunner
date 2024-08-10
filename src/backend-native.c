@@ -100,6 +100,7 @@ odk_backend_native_init(odk_backend_t *backend)
     errno = ENOSYS;
     return -1;
 #else
+    backend->prepare = NULL;
     backend->run = run;
     backend->close = close;
 
