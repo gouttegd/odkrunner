@@ -6,7 +6,8 @@ bin_PROGRAMS = odkrun
 
 convlib_sources = lib/memreg.c lib/memreg.h \
 		  lib/sbuffer.c lib/sbuffer.h \
-		  lib/xmem.c lib/xmem.h
+		  lib/xmem.c lib/xmem.h \
+		  lib/compat.h
 
 odkrun_SOURCES = src/odkrun.c \
 		 src/procutil.c src/procutil.h \
