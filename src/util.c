@@ -34,6 +34,10 @@
 
 #include "util.h"
 
+#include <errno.h>
+#include <assert.h>
+#include <sys/stat.h>
+
 #if defined(ODK_RUNNER_LINUX)
 #include <sys/sysinfo.h>
 
@@ -44,6 +48,8 @@
 #include <windows.h>
 
 #endif
+
+#include <xmem.h>
 
 /**
  * Gets the amount of physical memory available.
@@ -79,4 +85,87 @@ get_physical_memory(void)
 #endif
 
     return phys_mem;
+}
+
+/**
+ * Checks if the specified file exists.
+ *
+ * @param path The filename to check.
+ *
+ * @return 0 if the file exists, -1 otherwise (check errno for details).
+ */
+int
+file_exists(const char *path)
+{
+    struct stat st;
+
+    assert(path != NULL);
+
+    return stat(path, &st);
+}
+
+/**
+ * Gets the size of the specified file.
+ *
+ * @param f The file object.
+ *
+ * @return The file's size, or -1 if an error occured (check errno for
+ *         details).
+ */
+long
+get_file_size(FILE *f)
+{
+    long s;
+
+    assert(f != NULL);
+
+    if ( fseek(f, 0, SEEK_END) == -1
+            || (s = ftell(f)) == -1
+            || fseek(f, 0, SEEK_SET) == -1 )
+        s = -1;
+
+    return s;
+}
+
+/**
+ * Reads a file into memory.
+ *
+ * @param filename The path to the file to read.
+ * @param len      The address where the file's size will be stored
+ *                 (may be NULL).
+ * @param max      Do not read the file if its size exceeds this value;
+ *                 if zero, always read the file no matter its size.
+ *
+ * @return A newly allocated buffer containing the file's data, or
+ *         NULL if an error occured (check errno for details).
+ */
+char *
+read_file(const char *filename, size_t *len, size_t max)
+{
+    FILE *f;
+    char *blob = NULL;
+
+    assert(filename != NULL);
+
+    if ( (f = fopen(filename, "r")) ) {
+        long size;
+        size_t nread;
+
+        if ( (size = get_file_size(f)) != -1 ) {
+            if ( max != 0 && (unsigned long) size > max )
+                errno = EFBIG;
+            else {
+                blob = xmalloc(size);
+                if ( (nread = fread(blob, 1, size, f)) < (unsigned long) size ) {
+                    free(blob);
+                    blob = NULL;
+                } else if ( len )
+                    *len = nread;
+            }
+        }
+
+        fclose(f);
+    }
+
+    return blob;
 }

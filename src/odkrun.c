@@ -36,11 +36,13 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <locale.h>
+#include <errno.h>
 #include <err.h>
 
 #include <memreg.h>
 
 #include "runner.h"
+#include "util.h"
 #include "backend-docker.h"
 #include "backend-singularity.h"
 #include "backend-native.h"
@@ -90,6 +92,65 @@ See the COPYING file for more details.\n\
 ", VERSION);
 
     exit(EXIT_SUCCESS);
+}
+
+
+/* Helper functions. */
+
+#define GH_TOKEN_FILE "ontology-development-kit/github/token"
+
+void
+set_github_token(odk_run_config_t *cfg)
+{
+    char *token;
+
+    /* First try to get the token from the environment... */
+    token = getenv("GH_TOKEN");
+
+    if ( ! token ) {
+        char *token_path;
+
+        /* Then try to get it from the current repository... */
+        token_path = "../../.github/token.txt";
+        if ( file_exists(token_path) == -1 ) {
+            char *cfg_dir;
+
+            token_path = NULL;
+
+            /* Then try to get it from a system-wide location. */
+#if defined(ODK_RUNNER_LINUX)
+            if ( (cfg_dir = getenv("XDG_CONFIG_HOME")) )
+                token_path = mr_sprintf(NULL, "%s/" GH_TOKEN_FILE, cfg_dir);
+            else if ( (cfg_dir = getenv("HOME")) )
+                token_path = mr_sprintf(NULL, "%s/.config/" GH_TOKEN_FILE, cfg_dir);
+#elif defined(ODK_RUNNER_MACOS)
+            if ( (cfg_dir = getenv("HOME")) )
+                token_path = mr_sprintf(NULL, "%s/Library/Application Support/" GH_TOKEN_FILE, cfg_dir);
+#elif defined(ODK_RUNNER_WINDOWS)
+            if ( (cfg_dir = getenv("LOCALAPPDATA")) )
+                token_path = mr_sprintf(NULL, "%s/" GH_TOKEN_FILE ".txt", cfg_dir);
+#endif
+
+            if ( file_exists(token_path) == -1 )
+                token_path = NULL;
+        }
+
+        if ( token_path ) {
+            size_t len;
+
+            token = read_file(token_path, &len, 64);
+            if ( ! token )
+                err(EXIT_FAILURE, "Cannot read Github token file in %s", token_path);
+
+            if ( len > 0 && token[len - 1] == '\n' )
+                token[len - 1] = '\0';
+
+            mr_register(NULL, token, 0);
+        }
+    }
+
+    if ( token )
+        odk_add_env_var(cfg, "GH_TOKEN", token);
 }
 
 
@@ -168,6 +229,8 @@ main(int argc, char **argv)
     }
 
     odk_add_binding(&cfg, "../..", "/work");
+
+    set_github_token(&cfg);
 
     if ( backend_init(&backend) == -1 )
         err(EXIT_FAILURE, "Cannot initialise backend");

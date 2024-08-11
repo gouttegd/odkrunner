@@ -32,6 +32,7 @@
 #define ICP20240625_UTIL_H
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +40,15 @@ extern "C" {
 
 size_t
 get_physical_memory(void);
+
+int
+file_exists(const char *);
+
+long
+get_file_size(FILE *);
+
+char *
+read_file(const char *, size_t *, size_t);
 
 #ifdef __cplusplus
 }
