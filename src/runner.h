@@ -38,10 +38,10 @@ typedef struct odk_bind_config {
     const char *container_directory;
 } odk_bind_config_t;
 
-typedef struct odk_env_var {
+typedef struct odk_var {
     const char *name;
     const char *value;
-} odk_env_var_t;
+} odk_var_t;
 
 typedef struct odk_run_config {
     const char         *image_name;
@@ -49,8 +49,10 @@ typedef struct odk_run_config {
     const char         *work_directory;
     odk_bind_config_t  *bindings;
     size_t              n_bindings;
-    odk_env_var_t      *env_vars;
+    odk_var_t          *env_vars;
     size_t              n_env_vars;
+    size_t              n_java_opts;
+    odk_var_t          *java_opts;
     unsigned            flags;
 } odk_run_config_t;
 
@@ -74,6 +76,15 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst);
 
 void
 odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value);
+
+void
+odk_add_java_opt(odk_run_config_t *cfg, const char *option);
+
+void
+odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value);
+
+char *
+odk_make_java_args(odk_run_config_t *cfg, int);
 
 int
 odk_run_with_docker(odk_run_config_t *cfg, char **command);

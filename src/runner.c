@@ -53,6 +53,8 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->n_bindings = 0;
     cfg->env_vars = NULL;
     cfg->n_env_vars = 0;
+    cfg->java_opts = NULL;
+    cfg->n_java_opts = 0;
     cfg->flags = 0;
 }
 
@@ -74,6 +76,12 @@ odk_free_config(odk_run_config_t *cfg)
         cfg->env_vars = NULL;
         cfg->n_env_vars = 0;
     }
+
+    if ( cfg->java_opts ) {
+        free(cfg->java_opts);
+        cfg->java_opts = NULL;
+        cfg->n_java_opts = 0;
+    }
 }
 
 void
@@ -90,22 +98,110 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
     cfg->bindings[cfg->n_bindings++].container_directory = dst;
 }
 
+/* Common logic to odk_add_env_var and odk_add_java_opt. */
+static void
+add_var(odk_var_t **vars, size_t *n, const char *name, const char *value)
+{
+    for ( unsigned i = 0; i < *n; i++ ) {
+        if ( strcmp((*vars)[i].name, name) == 0 ) {
+            (*vars)[i].value = value;
+            return;
+        }
+    }
+
+    if ( *n % 10 == 0 )
+        *vars = xrealloc(*vars, sizeof(odk_var_t) * (*n + 10));
+
+    (*vars)[*n].name = name;
+    (*vars)[(*n)++].value = value;
+}
+
 void
 odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
 {
     assert(cfg != NULL);
     assert(name != NULL);
 
-    for ( int i = 0; i < cfg->n_env_vars; i++ ) {
-        if ( strcmp(cfg->env_vars[i].name, name) == 0 ) {
-            cfg->env_vars[i].value = value;
-            return;
+    add_var(&(cfg->env_vars), &(cfg->n_env_vars), name, value);
+}
+
+/**
+ * Adds a Java option to the configuration.
+ *
+ * @param cfg    The configuration to update.
+ * @param option The option to add.
+ */
+void
+odk_add_java_opt(odk_run_config_t *cfg, const char *option)
+{
+    assert(cfg != NULL);
+    assert(option != NULL);
+
+    add_var(&(cfg->java_opts), &(cfg->n_java_opts), option, NULL);
+}
+
+/**
+ * Adds a Java system property to the configuration.
+ *
+ * @param cfg   The configuration to update.
+ * @param name  The name of the property to define.
+ * @param value The value of the property.
+ */
+void
+odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value)
+{
+    assert(cfg != NULL);
+    assert(name != NULL);
+
+    add_var(&(cfg->java_opts), &(cfg->n_java_opts), name, value);
+}
+
+/**
+ * Compiles all Java options and properties into a string of command
+ * line arguments suitable to be passed to a Java virtual machine.
+ *
+ * @param cfg    The configuration containing the Java options.
+ * @param to_env If non-zero, the compiled arguments are added to the
+ *               configuration as environment variables.
+ * @return A newly allocated buffer containing all the Java command
+ *         line arguments.
+ */
+char *
+odk_make_java_args(odk_run_config_t *cfg, int to_env)
+{
+    char *buffer = NULL;
+    size_t needed = 0;
+    unsigned i, j;
+
+    for ( i = 0; i < cfg->n_java_opts; i++ ) {
+        if ( i > 0 )
+            needed += 1;    /* separator */
+
+        needed += strlen(cfg->java_opts[i].name);
+
+        if ( cfg->java_opts[i].value ) {
+            needed += 3;    /* -D...= */
+            needed += strlen(cfg->java_opts[i].value);
         }
     }
 
-    if ( cfg->n_env_vars % 10 == 0 )
-        cfg->env_vars = xrealloc(cfg->env_vars, sizeof(odk_env_var_t) * (cfg->n_env_vars + 10));
+    if ( needed > 0 )
+        buffer = xmalloc(needed);
 
-    cfg->env_vars[cfg->n_env_vars].name = name;
-    cfg->env_vars[cfg->n_env_vars++].value = value;
+    for ( i = 0, j = 0; i < cfg->n_java_opts; i++ ) {
+        if ( i > 0 )
+            buffer[j++] = ' ';
+
+        if ( cfg->java_opts[i].value )  /* -D...=... */
+            j += sprintf(&(buffer[j]), "-D%s=%s", cfg->java_opts[i].name, cfg->java_opts[i].value);
+        else
+            j += sprintf(&(buffer[j]), "%s", cfg->java_opts[i].name);
+    }
+
+    if ( to_env ) {
+        odk_add_env_var(cfg, "ODK_JAVA_OPTS", buffer);
+        odk_add_env_var(cfg, "ROBOT_JAVA_ARGS", buffer);
+    }
+
+    return buffer;
 }

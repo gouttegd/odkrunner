@@ -237,12 +237,12 @@ main(int argc, char **argv)
 
     if ( backend.info.total_memory > 0 ) {
         unsigned long java_mem = backend.info.total_memory * 0.9;
-        if ( java_mem > 1024*1024*1024 ) {
-            char *java_opt = mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024));
-            odk_add_env_var(&cfg, "ROBOT_JAVA_ARGS", java_opt);
-            odk_add_env_var(&cfg, "JAVA_OPTS", java_opt);
-        }
+        if ( java_mem > 1024*1024*1024 )
+            odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)));
     }
+
+    if ( cfg.n_java_opts )
+        mr_register(NULL, odk_make_java_args(&cfg, 1), 1);
 
     if ( backend.prepare )
         ret = backend.prepare(&backend, &cfg);
