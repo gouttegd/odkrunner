@@ -36,13 +36,17 @@
 
 #include <errno.h>
 #include <assert.h>
+#include <dirent.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #if defined(ODK_RUNNER_LINUX)
 #include <sys/sysinfo.h>
+#include <fnmatch.h>
 
 #elif defined(ODK_RUNNER_MACOS)
 #include <sys/sysctl.h>
+#include <fnmatch.h>
 
 #elif defined(ODK_RUNNER_WINDOWS)
 #include <windows.h>
@@ -102,6 +106,52 @@ file_exists(const char *path)
     assert(path != NULL);
 
     return stat(path, &st);
+}
+
+/**
+ * Checks if a file matching the specified pattern exists.
+ *
+ * @param directory The directory where to search for the file.
+ * @param pattern   The pattern to look for.
+ *
+ * @return 0 if a matching file is found, -1 otherwise.
+ */
+int
+file_match_exists(const char *directory, const char *pattern)
+{
+    int found = 0;
+
+#if defined(ODK_RUNNER_WINDOWS)
+    char *search = NULL;
+    WIN32_FIND_DATA find_data;
+    HANDLE handle;
+
+    if ( *directory == '.' && *(directory + 1) == '\0' )
+        search = (char *) pattern;
+    else
+        xasprintf(&search, "%s/%s", directory, pattern);
+
+    if ( (handle = FindFirstFile(search, &find_data)) != INVALID_HANDLE_VALUE ) {
+        found = 1;
+        FindClose(handle);
+    }
+
+    if ( search != pattern )
+        free(search);
+#else
+    DIR *dir;
+
+    if ( (dir = opendir(directory)) ) {
+        struct dirent *entry;
+
+        while ( ! found && (entry = readdir(dir)) )
+            found = fnmatch(pattern, entry->d_name, 0) == 0;
+
+        closedir(dir);
+    }
+#endif /* ! ODK_RUNNER_WINDOWS */
+
+    return found ? 0 : -1;
 }
 
 /**

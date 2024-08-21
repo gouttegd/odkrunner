@@ -195,6 +195,28 @@ handle_owlapi_option(odk_run_config_t *cfg, char *option)
     odk_add_java_property(cfg, property, value);
 }
 
+static int
+is_odk_repository(const char *directory)
+{
+    int ret = 0;
+
+    if ( file_match_exists(directory, "*-odk.yaml") == 0 ) {
+        char *path, *p;
+
+        path = realpath(directory, NULL);
+#if defined (ODK_RUNNER_WINDOWS)
+        if ( (p = strstr(path, "\\src\\ontology")) )
+#else
+        if ( (p = strstr(path, "/src/ontology")) )
+#endif
+            ret = *(p + 13) == '\0';
+
+        free(path);
+    }
+
+    return ret;
+}
+
 
 /* Main function. */
 
@@ -288,7 +310,12 @@ main(int argc, char **argv)
         }
     }
 
-    odk_add_binding(&cfg, "../..", "/work");
+    if ( is_odk_repository(".") ) {
+        odk_add_binding(&cfg, "../..", "/work");
+        cfg.work_directory = "/work/src/ontology";
+    }
+    else
+        odk_add_binding(&cfg, ".", "/work");
 
     set_github_token(&cfg);
 

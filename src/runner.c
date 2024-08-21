@@ -48,7 +48,7 @@ odk_init_config(odk_run_config_t *cfg)
 {
     cfg->image_name = "obolibrary/odkfull";
     cfg->image_tag = "latest";
-    cfg->work_directory = "/work/src/ontology";
+    cfg->work_directory = "/work";
     cfg->bindings = NULL;
     cfg->n_bindings = 0;
     cfg->env_vars = NULL;

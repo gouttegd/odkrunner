@@ -44,6 +44,9 @@ get_physical_memory(void);
 int
 file_exists(const char *);
 
+int
+file_match_exists(const char *, const char *);
+
 long
 get_file_size(FILE *);
 
