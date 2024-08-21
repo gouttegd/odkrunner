@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <locale.h>
 #include <errno.h>
@@ -46,6 +47,7 @@
 #include "backend-docker.h"
 #include "backend-singularity.h"
 #include "backend-native.h"
+#include "owlapi.h"
 
 
 /* Help and information about the program. */
@@ -73,6 +75,13 @@ Start a ODK container.\n");
                         rather than Docker.\n\
     -n, --native        Run in the native system, not in a container.\n\
     --root              When running in a container, run as a superuser.\n\
+");
+
+    puts("\
+    --owlapi-option NAME=VALUE\n\
+                        Pass an option to OWLAPI. Repeat as needed to\n\
+                        several options. Use --owlapi-option=help to\n\
+                        list all available options.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -153,6 +162,22 @@ set_github_token(odk_run_config_t *cfg)
         odk_add_env_var(cfg, "GH_TOKEN", token);
 }
 
+static void
+handle_owlapi_option(odk_run_config_t *cfg, char *option)
+{
+    char *property, *value, *errmsg;
+
+    if ( strcmp("help", option) == 0 ) {
+        list_owlapi_options(stdout);
+        exit(0);
+    }
+
+    if ( get_owlapi_java_property(option, &property, &value, &errmsg) < 0 )
+        errx(EXIT_FAILURE, "Invalid --owlapi-option argument: %s", errmsg);
+
+    odk_add_java_property(cfg, property, value);
+}
+
 
 /* Main function. */
 
@@ -175,6 +200,7 @@ main(int argc, char **argv)
         { "singularity",    0, NULL, 's' },
         { "native",         0, NULL, 'n' },
         { "root",           0, NULL, 256 },
+        { "owlapi-option",  1, NULL, 257 },
         { NULL,             0, NULL, 0 }
     };
 
@@ -224,6 +250,10 @@ main(int argc, char **argv)
 
         case 256:
             cfg.flags |= ODK_FLAG_RUNASROOT;
+            break;
+
+        case 257:
+            handle_owlapi_option(&cfg, optarg);
             break;
         }
     }

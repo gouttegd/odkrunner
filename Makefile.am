@@ -17,6 +17,7 @@ odkrun_SOURCES = src/odkrun.c \
 		 src/backend-docker.c src/backend-docker.h \
 		 src/backend-singularity.c src/backend-singularity.h \
 		 src/backend-native.c src/backend-native.h \
+		 src/owlapi.c src/owlapi.h src/owlapi-options.h \
 		 $(convlib_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib
