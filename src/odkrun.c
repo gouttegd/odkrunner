@@ -78,10 +78,14 @@ Start a ODK container.\n");
 ");
 
     puts("\
+    -e, --env NAME=VALUE\n\
+                        Pass an environment variable to the container.\n\
+    --java-property NAME=VALUE\n\
+                        Pass a Java system property to Java programs\n\
+                        within the container.\n\
     --owlapi-option NAME=VALUE\n\
-                        Pass an option to OWLAPI. Repeat as needed to\n\
-                        several options. Use --owlapi-option=help to\n\
-                        list all available options.\n\
+                        Pass an option to OWLAPI. Use\n\
+                        --owlapi-option=help to list available options.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -106,9 +110,22 @@ See the COPYING file for more details.\n\
 
 /* Helper functions. */
 
+static char *
+split_key_value_pair(char *arg, const char *opt_name)
+{
+    char *value;
+
+    if ( ! (value = strchr(arg, '=')) || *(value + 1) == '\0' )
+        errx(EXIT_FAILURE, "Option --%s expects a key=value parameter", opt_name);
+
+    *value++ = '\0';
+    return value;
+}
+
+
 #define GH_TOKEN_FILE "ontology-development-kit/github/token"
 
-void
+static void
 set_github_token(odk_run_config_t *cfg)
 {
     char *token;
@@ -186,6 +203,7 @@ main(int argc, char **argv)
 {
     int c;
     int ret = 0;
+    char *opt_value;
     odk_run_config_t cfg;
     odk_backend_t backend = { 0 };
     odk_backend_init backend_init = odk_backend_docker_init;
@@ -199,8 +217,10 @@ main(int argc, char **argv)
         { "lite",           0, NULL, 'l' },
         { "singularity",    0, NULL, 's' },
         { "native",         0, NULL, 'n' },
+        { "env",            1, NULL, 'e' },
         { "root",           0, NULL, 256 },
         { "owlapi-option",  1, NULL, 257 },
+        { "java-property",  1, NULL, 258 },
         { NULL,             0, NULL, 0 }
     };
 
@@ -209,7 +229,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "hvdi:t:lsn", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "hvdi:t:lsne:", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
@@ -250,6 +270,16 @@ main(int argc, char **argv)
 
         case 256:
             cfg.flags |= ODK_FLAG_RUNASROOT;
+            break;
+
+        case 'e':
+            opt_value = split_key_value_pair(optarg, "env");
+            odk_add_env_var(&cfg, optarg, opt_value);
+            break;
+
+        case 258:
+            opt_value = split_key_value_pair(optarg, "java-property");
+            odk_add_java_property(&cfg, optarg, opt_value);
             break;
 
         case 257:
