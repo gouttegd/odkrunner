@@ -87,7 +87,7 @@ odk_free_config(odk_run_config_t *cfg)
     }
 }
 
-void
+int
 odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
 {
     char *path;
@@ -96,17 +96,23 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
     assert(src != NULL);
     assert(dst != NULL);
 
+    if ( ! (path = realpath(src, NULL)) ) {
+        /* Do not fail if the path does not exist on the host; assume
+         * the users know what they are doing, and simply use the
+         * provided path as is; any other error is ground for failure. */
+        if ( errno == ENOENT )
+            path = xstrdup(src);
+        else
+            return -1;
+    }
+
     if ( cfg->n_bindings % 10 == 0 )
         cfg->bindings = xrealloc(cfg->bindings, sizeof(odk_bind_config_t) * (cfg->n_bindings + 10));
 
-    if ( ! (path = realpath(src, NULL)) && errno == ENOENT ) {
-        /* Binding a path that does not seem to exist on the host;
-         * assume the users know what they are doing. */
-        path = xstrdup(src);
-    }
-
     cfg->bindings[cfg->n_bindings].host_directory = path;
     cfg->bindings[cfg->n_bindings++].container_directory = dst;
+
+    return 0;
 }
 
 /* Common logic to odk_add_env_var and odk_add_java_opt. */

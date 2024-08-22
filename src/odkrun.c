@@ -238,6 +238,20 @@ is_odk_repository(const char *directory)
     return ret;
 }
 
+static void
+set_work_directory(odk_run_config_t *cfg)
+{
+    char *cwd = ".";
+
+    if ( is_odk_repository(cwd) ) {
+        cwd = "../..";
+        cfg->work_directory = "/work/src/ontology";
+    }
+
+    if ( odk_add_binding(cfg, cwd, "/work") == -1 )
+        err(EXIT_FAILURE, "Cannot bind directory '%s'", cwd);
+}
+
 
 /* Main function. */
 
@@ -346,13 +360,7 @@ main(int argc, char **argv)
         }
     }
 
-    if ( is_odk_repository(".") ) {
-        odk_add_binding(&cfg, "../..", "/work");
-        cfg.work_directory = "/work/src/ontology";
-    }
-    else
-        odk_add_binding(&cfg, ".", "/work");
-
+    set_work_directory(&cfg);
     set_github_token(&cfg);
 
     if ( backend_init(&backend) == -1 )

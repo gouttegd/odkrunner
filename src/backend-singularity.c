@@ -49,6 +49,7 @@
 static int
 prepare(odk_backend_t *backend, odk_run_config_t *cfg)
 {
+    int ret = 0;
     char *ssh_socket;
 
     if ( (cfg->flags & ODK_FLAG_RUNASROOT) == 0 ) {
@@ -65,11 +66,11 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
     }
 
     if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) ) {
-        odk_add_binding(cfg, ssh_socket, SINGULARITY_SSH_SOCKET);
         odk_add_env_var(cfg, "SSH_AUTH_SOCK", SINGULARITY_SSH_SOCKET);
+        ret = odk_add_binding(cfg, ssh_socket, SINGULARITY_SSH_SOCKET);
     }
 
-    return 0;
+    return ret;
 }
 
 static int

@@ -74,7 +74,7 @@ odk_init_config(odk_run_config_t *cfg);
 void
 odk_free_config(odk_run_config_t *cfg);
 
-void
+int
 odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst);
 
 void
