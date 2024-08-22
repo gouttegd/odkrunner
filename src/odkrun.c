@@ -275,7 +275,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "hvdi:t:lsne:", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
