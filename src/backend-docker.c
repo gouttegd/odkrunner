@@ -45,9 +45,13 @@
 
 #include "procutil.h"
 
+#define DOCKER_SSH_SOCKET "/run/host-services/ssh-auth.sock"
+
 static int
 prepare(odk_backend_t *backend, odk_run_config_t *cfg)
 {
+    char *ssh_socket;
+
     if ( (cfg->flags & ODK_FLAG_RUNASROOT) == 0 ) {
 #if defined(ODK_RUNNER_LINUX)
         char *user_id = mr_sprintf(NULL, "%u", getuid());
@@ -59,6 +63,17 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
 
         odk_add_env_var(cfg, "ODK_USER_ID", user_id);
         odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
+    }
+
+    if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) ) {
+#if defined(ODK_RUNNER_MACOS)
+        /* Docker on macOS does not support forwarding an arbitrary
+         * socket, but has an explicit workaround for the SSH
+         * authentication socket using a hardcoded path. */
+        ssh_socket = DOCKER_SSH_SOCKET;
+#endif
+        odk_add_binding(cfg, ssh_socket, DOCKER_SSH_SOCKET);
+        odk_add_env_var(cfg, "SSH_AUTH_SOCK", DOCKER_SSH_SOCKET);
     }
 
     return 0;

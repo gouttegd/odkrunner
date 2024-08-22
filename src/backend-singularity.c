@@ -44,9 +44,13 @@
 #include "procutil.h"
 #include "util.h"
 
+#define SINGULARITY_SSH_SOCKET "/run/host-services/ssh-auth.sock"
+
 static int
 prepare(odk_backend_t *backend, odk_run_config_t *cfg)
 {
+    char *ssh_socket;
+
     if ( (cfg->flags & ODK_FLAG_RUNASROOT) == 0 ) {
 #if defined(ODK_RUNNER_LINUX)
         char *user_id = mr_sprintf(NULL, "%u", getuid());
@@ -58,6 +62,11 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
 
         odk_add_env_var(cfg, "ODK_USER_ID", user_id);
         odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
+    }
+
+    if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) ) {
+        odk_add_binding(cfg, ssh_socket, SINGULARITY_SSH_SOCKET);
+        odk_add_env_var(cfg, "SSH_AUTH_SOCK", SINGULARITY_SSH_SOCKET);
     }
 
     return 0;
