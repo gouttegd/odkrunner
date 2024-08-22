@@ -44,6 +44,7 @@
 #include <memreg.h>
 
 #include "procutil.h"
+#include "util.h"
 
 #define DOCKER_SSH_SOCKET "/run/host-services/ssh-auth.sock"
 
@@ -65,7 +66,8 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
         odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
     }
 
-    if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) ) {
+    if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) &&
+            file_exists(ssh_socket) == 0 ) {
 #if defined(ODK_RUNNER_MACOS)
         /* Docker on macOS does not support forwarding an arbitrary
          * socket, but has an explicit workaround for the SSH
