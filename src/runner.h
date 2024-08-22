@@ -53,6 +53,8 @@ typedef struct odk_run_config {
     size_t              n_env_vars;
     size_t              n_java_opts;
     odk_var_t          *java_opts;
+    char               *git_user;
+    char               *git_email;
     unsigned            flags;
 } odk_run_config_t;
 
@@ -60,6 +62,7 @@ typedef int (*odk_run_command)(odk_run_config_t *, char**);
 
 #define ODK_FLAG_TIMEDEBUG  0x0001
 #define ODK_FLAG_RUNASROOT  0x0002
+#define ODK_FLAG_SEEDMODE   0x0004
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,12 +88,6 @@ odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value
 
 char *
 odk_make_java_args(odk_run_config_t *cfg, int);
-
-int
-odk_run_with_docker(odk_run_config_t *cfg, char **command);
-
-int
-odk_run_with_singularity(odk_run_config_t *cfg, char **command);
 
 #ifdef __cplusplus
 }

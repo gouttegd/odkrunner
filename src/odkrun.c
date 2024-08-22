@@ -75,6 +75,9 @@ Start a ODK container.\n");
                         rather than Docker.\n\
     -n, --native        Run in the native system, not in a container.\n\
     --root              When running in a container, run as a superuser.\n\
+    --seed              Seed a new ODK repository.\n\
+    --gitname           Set Git username to use when seeding.\n\
+    --gitemail          Set Git email to use when seeding.\n\
 ");
 
     puts("\
@@ -180,6 +183,24 @@ set_github_token(odk_run_config_t *cfg)
 }
 
 static void
+get_git_user_info(odk_run_config_t *cfg)
+{
+    if ( ! cfg->git_user ) {
+        if ( (cfg->git_user = read_line_from_pipe("git config --get user.name")) )
+            mr_register(NULL, cfg->git_user, 0);
+        else
+            err(EXIT_FAILURE, "Cannot get Git user name (needed for --seed)");
+    }
+
+    if ( ! cfg->git_email ) {
+        if ( (cfg->git_email = read_line_from_pipe("git config --get user.email")) )
+            mr_register(NULL, cfg->git_email, 0);
+        else
+            errx(EXIT_FAILURE, "Cannot get Git user email (needed for --seed)");
+    }
+}
+
+static void
 handle_owlapi_option(odk_run_config_t *cfg, char *option)
 {
     char *property, *value, *errmsg;
@@ -243,6 +264,9 @@ main(int argc, char **argv)
         { "root",           0, NULL, 256 },
         { "owlapi-option",  1, NULL, 257 },
         { "java-property",  1, NULL, 258 },
+        { "seed",           0, NULL, 259 },
+        { "gitname",        1, NULL, 260 },
+        { "gitemail",       1, NULL, 261 },
         { NULL,             0, NULL, 0 }
     };
 
@@ -307,6 +331,18 @@ main(int argc, char **argv)
         case 257:
             handle_owlapi_option(&cfg, optarg);
             break;
+
+        case 259:
+            cfg.flags |= ODK_FLAG_SEEDMODE;
+            break;
+
+        case 260:
+            cfg.git_user = optarg;
+            break;
+
+        case 261:
+            cfg.git_email = optarg;
+            break;
         }
     }
 
@@ -330,6 +366,9 @@ main(int argc, char **argv)
 
     if ( cfg.n_java_opts )
         mr_register(NULL, odk_make_java_args(&cfg, 1), 1);
+
+    if ( cfg.flags & ODK_FLAG_SEEDMODE )
+        get_git_user_info(&cfg);
 
     if ( backend.prepare )
         ret = backend.prepare(&backend, &cfg);

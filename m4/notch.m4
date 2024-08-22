@@ -4,7 +4,7 @@ dnl everywhere, and for which we provide a replacement.
 dnl
 AC_DEFUN([ICP_CHECK_NOTCH_FUNCS],[
 AC_CHECK_HEADERS([err.h], [], [AC_CONFIG_LINKS([err.h:lib/err.compat.h])])
-AC_REPLACE_FUNCS([err realpath])
+AC_REPLACE_FUNCS([err realpath getdelim])
 AC_CHECK_DECLS([program_invocation_short_name], [],
                [AC_CHECK_FUNCS([getprogname setprogname], [],
                                [AC_LIBOBJ([progname])])],

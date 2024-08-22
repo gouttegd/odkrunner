@@ -53,6 +53,9 @@ get_file_size(FILE *);
 char *
 read_file(const char *, size_t *, size_t);
 
+char *
+read_line_from_pipe(const char *);
+
 #ifdef __cplusplus
 }
 #endif

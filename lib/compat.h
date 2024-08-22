@@ -24,6 +24,19 @@ extern "C" {
 #endif
 
 
+#ifndef HAVE_GETDELIM
+
+#include <stdio.h>
+#include <stdlib.h>
+
+ssize_t
+getdelim(char **, size_t *, int, FILE *);
+
+#define getline(l,n,f)  getdelim((l), (n), '\n', (f))
+
+#endif /* ! HAVE_GETDELIM */
+
+
 #if HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
 
 /*

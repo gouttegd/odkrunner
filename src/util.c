@@ -34,6 +34,7 @@
 
 #include "util.h"
 
+#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <dirent.h>
@@ -218,4 +219,32 @@ read_file(const char *filename, size_t *len, size_t max)
     }
 
     return blob;
+}
+
+/**
+ * Reads a single line from a pipe.
+ *
+ * @param command The command to open a pipe from.
+ *
+ * @return A newly allocated buffer containing the first line of output
+ *         from the command (not including any newline character), or
+ *         NULL if an error occured (check errno for details).
+ */
+char *
+read_line_from_pipe(const char *command)
+{
+    char *line = NULL;
+    size_t n = 0;
+    FILE *p;
+
+    if ( (p = popen(command, "r")) ) {
+        if ( getline(&line, &n, p) != -1 ) {
+            n = strlen(line);
+            if ( line[n - 1] == '\n' )
+                line[n - 1] = '\0';
+        }
+        pclose(p);
+    }
+
+    return line;
 }

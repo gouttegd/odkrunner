@@ -56,6 +56,8 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->n_env_vars = 0;
     cfg->java_opts = NULL;
     cfg->n_java_opts = 0;
+    cfg->git_user = NULL;
+    cfg->git_email = NULL;
     cfg->flags = 0;
 }
 

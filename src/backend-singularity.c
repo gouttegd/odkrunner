@@ -91,6 +91,8 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
         n += 2;
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG )
         n += 3;
+    if ( cfg->flags & ODK_FLAG_SEEDMODE )
+        n += 6;
     for ( cursor = &command[0]; *cursor; cursor++ )
         n += 1;
 
@@ -129,6 +131,14 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
         argv[i++] = "/usr/bin/time";
         argv[i++] = "-f";
         argv[i++] = "### DEBUG STATS ###\nElapsed time: %E\nPeak memory: %M kb";
+    }
+    if ( cfg->flags & ODK_FLAG_SEEDMODE ) {
+        argv[i++] = "/tools/odk.py";
+        argv[i++] = "seed";
+        argv[i++] = "--gitname";
+        argv[i++] = cfg->git_user;
+        argv[i++] = "--gitemail";
+        argv[i++] = cfg->git_email;
     }
     for ( cursor = &command[0]; *cursor; cursor++ )
         argv[i++] = *cursor;
