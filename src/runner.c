@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <assert.h>
 
 #include <xmem.h>
@@ -87,6 +88,8 @@ odk_free_config(odk_run_config_t *cfg)
 void
 odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
 {
+    char *path;
+
     assert(cfg != NULL);
     assert(src != NULL);
     assert(dst != NULL);
@@ -94,7 +97,13 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
     if ( cfg->n_bindings % 10 == 0 )
         cfg->bindings = xrealloc(cfg->bindings, sizeof(odk_bind_config_t) * (cfg->n_bindings + 10));
 
-    cfg->bindings[cfg->n_bindings].host_directory = realpath(src, NULL);
+    if ( ! (path = realpath(src, NULL)) && errno == ENOENT ) {
+        /* Binding a path that does not seem to exist on the host;
+         * assume the users know what they are doing. */
+        path = xstrdup(src);
+    }
+
+    cfg->bindings[cfg->n_bindings].host_directory = path;
     cfg->bindings[cfg->n_bindings++].container_directory = dst;
 }
 
