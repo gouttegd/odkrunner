@@ -44,6 +44,11 @@
 #include <memreg.h>
 #include <sbuffer.h>
 
+/**
+ * Initialises a ODK configuration structure.
+ *
+ * @param cfg The ODK configuration.
+ */
 void
 odk_init_config(odk_run_config_t *cfg)
 {
@@ -61,6 +66,11 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->flags = 0;
 }
 
+/**
+ * Frees all resources associated with a ODK configuration.
+ *
+ * @param cfg The ODK configuration.
+ */
 void
 odk_free_config(odk_run_config_t *cfg)
 {
@@ -87,6 +97,18 @@ odk_free_config(odk_run_config_t *cfg)
     }
 }
 
+/**
+ * Adds a new binding to the configuration.
+ *
+ * @param cfg The ODK configuration to update.
+ * @param src The path to the host side of the binding.
+ * @param dst The path to the container side of the binding. This
+ *            pointer must remain valid for the lifetime of the
+ *            configuration.
+ *
+ * @return 0 if successful, or -1 if an error occured when attempting to
+ *         canonicalise the src path.
+ */
 int
 odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
 {
@@ -133,6 +155,19 @@ add_var(odk_var_t **vars, size_t *n, const char *name, const char *value)
     (*vars)[(*n)++].value = value;
 }
 
+/**
+ * Adds a new environment variable to the configuration. If the variable
+ * already exists (if it has been added by a previous call to this
+ * function), the previous value is replaced.
+ *
+ * @param cfg   The ODK configuration to update.
+ * @param name  The name of the new variable.
+ * @param value The value of the variable; may be NULL to forcefully
+ *              remove an existing value.
+ *
+ * @note Pointers for both the name and the value must remain valid for
+ *       the lifetime of the configuration.
+ */
 void
 odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
 {
@@ -145,8 +180,10 @@ odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
 /**
  * Adds a Java option to the configuration.
  *
- * @param cfg    The configuration to update.
- * @param option The option to add.
+ * @param cfg    The ODK configuration to update.
+ * @param option The option to add; this should be a valid option as
+ *               expected by the java command. The pointer must remain
+ *               valid for the lifetime of the configuration.
  */
 void
 odk_add_java_opt(odk_run_config_t *cfg, const char *option)
@@ -160,9 +197,12 @@ odk_add_java_opt(odk_run_config_t *cfg, const char *option)
 /**
  * Adds a Java system property to the configuration.
  *
- * @param cfg   The configuration to update.
+ * @param cfg   The ODK configuration to update.
  * @param name  The name of the property to define.
  * @param value The value of the property.
+ *
+ * @note Pointers for both the name and the value must remain valid for
+ *       the lifetime of the configuration.
  */
 void
 odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value)
@@ -180,8 +220,10 @@ odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value
  * @param cfg    The configuration containing the Java options.
  * @param to_env If non-zero, the compiled arguments are added to the
  *               configuration as environment variables.
+ *
  * @return A newly allocated buffer containing all the Java command
- *         line arguments.
+ *         line arguments. If to_env is true, then that buffer must not
+ *         be freed for the lifetime of the configuration.
  */
 char *
 odk_make_java_args(odk_run_config_t *cfg, int to_env)

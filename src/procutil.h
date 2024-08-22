@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 int
-spawn_process(char **argv);
+spawn_process(char **);
 
 #ifdef __cplusplus
 }

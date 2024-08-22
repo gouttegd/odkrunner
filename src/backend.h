@@ -33,27 +33,59 @@
 
 #include "runner.h"
 
+/* Holds backend-specific data. */
 typedef struct odk_backend_info {
     unsigned long total_memory;
 } odk_backend_info_t;
 
 typedef struct odk_backend odk_backend_t;
 
+/* Represents a ODK backend, with (1) function pointers to the actual
+ * implementations and (2) backend-specific data. */
 struct odk_backend {
     odk_backend_info_t info;
 
-    /* Updates the runner configuration with backend-specific infos */
-    int   (*prepare)(odk_backend_t *, odk_run_config_t *);
+    /**
+     * Updates the runner configuration with backend-specific infos.
+     *
+     * @param backend The backend in use.
+     * @param cfg     The ODK configuration to update.
+     *
+     * @return 0 if successful, or -1 if an error occured.
+     */
+    int   (*prepare)(odk_backend_t *backend, odk_run_config_t *cfg);
 
-    /* Executes a ODK command */
-    int   (*run)(odk_backend_t *, odk_run_config_t *, char **);
+    /**
+     * Executes a ODK command.
+     *
+     * @param backend The backend in use.
+     * @param cfg     The ODK configuration.
+     * @param command The command to execute, as a NULL-terminated array
+     *                of arguments.
+     *
+     * @return 0 if successful, or -1 if an error occured.
+     */
+    int   (*run)(odk_backend_t *backend, odk_run_config_t *cfg,
+                 char **command);
 
-    /* Frees resources associated with the backend */
-    int   (*close)(odk_backend_t *);
+    /*
+     * Frees resources associated with the backend.
+     *
+     * @param backend The backend in use.
+     *
+     * @return 0 if successful, or -1 if an error occured.
+     */
+    int   (*close)(odk_backend_t *backend);
 };
 
-/* Initialises the backend. */
-typedef int (*odk_backend_init)(odk_backend_t *);
+/**
+ * Initialises the backend.
+ *
+ * @param backend The backend to initialise.
+ *
+ * @return 0 if successful, or -1 if an error occured.
+ */
+typedef int (*odk_backend_init)(odk_backend_t *backend);
 
 
 #endif /* !ICP20240622_BACKEND_H */

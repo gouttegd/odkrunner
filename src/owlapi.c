@@ -77,6 +77,7 @@ is_valid_enum_value(char *arg, ...)
  *                      argument.
  * @param[out] error    If an error occurs, will hold an error message
  *                      in a newly allocated buffer.
+ *
  * @return 0 upon success, or -1 if an error occurs.
  */
 int

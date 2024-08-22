@@ -59,36 +59,47 @@ usage(int status)
 Usage: odkrun [options] [COMMAND...]\n\
 Start a ODK container.\n");
 
-    puts("Options:\n\
+    puts("General options:\n\
     -h, --help          Display this help message.\n\
     -v, --version       Display the version message.\n\
+    -d, --debug         Print debug informations.\n\
 ");
 
-    puts("\
-    -d, --debug         Print debug informations.\n\
+    puts("Image options:\n\
     -i, --image NAME    Use the specified image. The default is to use\n\
                         the 'obolibrary/odkfull' image.\n\
     -t, --tag TAG       Use the specified image tag. The default is the\n\
                         'latest' tag.\n\
-    -l, --lite          Use the 'obolibrary/odklite' image.\n\
-    -s, --singularity   Run the container with Singularity\n\
-                        rather than Docker.\n\
-    -n, --native        Run in the native system, not in a container.\n\
-    --root              When running in a container, run as a superuser.\n\
-    --seed              Seed a new ODK repository.\n\
-    --gitname           Set Git username to use when seeding.\n\
-    --gitemail          Set Git email to use when seeding.\n\
+    -l, --lite          Use the 'obolibrary/odklite' image. This is\n\
+                        equivalent to '--image obolibrary/odklite'.\n\
 ");
 
-    puts("\
+    puts("Backend options:\n\
+    -s, --singulary     Run the container with Singularity rather\n\
+                        than Docker (experimental).\n\
+    -n, --native        Run in the native system, not in a container\n\
+                        (VERY experimental).\n\
+        --root          Run as a superuser within the container.\n\
+");
+
+    puts("Passing settings to the container:\n\
     -e, --env NAME=VALUE\n\
-                        Pass an environment variable to the container.\n\
-    --java-property NAME=VALUE\n\
+                        Pass an environment variable.\n\
+        --java-property NAME=VALUE\n\
                         Pass a Java system property to Java programs\n\
-                        within the container.\n\
-    --owlapi-option NAME=VALUE\n\
-                        Pass an option to OWLAPI. Use\n\
-                        --owlapi-option=help to list available options.\n\
+                        (mostly ROBOT) within the container.\n\
+        --owlapi-option NAME=VALUE\n\
+                        Pass an option to the OWLAPI library. To list\n\
+                        available options, use '--owlapi-option=help'.\n\
+");
+
+    puts("Seeding mode options:\n\
+        --seed OPTIONS  Seed a new ODK repository.\n\
+        --gitname NAME  Set the Git user name. The default is to obtain\n\
+                        the name from the local Git configuration.\n\
+        --gitemail EMAIL\n\
+                        Set the Git user email. The default is to obtain\n\
+                        the email from the local Git configuration.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -111,8 +122,11 @@ See the COPYING file for more details.\n\
 }
 
 
-/* Helper functions. */
+/* Helper functions for command line processing. */
 
+/* Splits a key=value pair around the '=' sign; arg is updated in place
+ * so that it only contains the key, while a pointer to the value is
+ * returned. */
 static char *
 split_key_value_pair(char *arg, const char *opt_name)
 {
@@ -125,9 +139,30 @@ split_key_value_pair(char *arg, const char *opt_name)
     return value;
 }
 
+/* Checks that option is a valid OWLAPI option and updates the ODK
+ * configuration accordingly. */
+static void
+handle_owlapi_option(odk_run_config_t *cfg, char *option)
+{
+    char *property, *value, *errmsg;
+
+    if ( strcmp("help", option) == 0 ) {
+        list_owlapi_options(stdout);
+        exit(0);
+    }
+
+    if ( get_owlapi_java_property(option, &property, &value, &errmsg) < 0 )
+        errx(EXIT_FAILURE, "Invalid --owlapi-option argument: %s", errmsg);
+
+    odk_add_java_property(cfg, property, value);
+}
+
+
+/* Helper functions to configure the ODK. */
 
 #define GH_TOKEN_FILE "ontology-development-kit/github/token"
 
+/* Configures the ODK to use a GitHub token. */
 static void
 set_github_token(odk_run_config_t *cfg)
 {
@@ -182,9 +217,13 @@ set_github_token(odk_run_config_t *cfg)
         odk_add_env_var(cfg, "GH_TOKEN", token);
 }
 
+/* Configures the ODK with a Git username and email. */
 static void
-get_git_user_info(odk_run_config_t *cfg)
+set_git_user(odk_run_config_t *cfg)
 {
+    if ( ! (cfg->flags & ODK_FLAG_SEEDMODE) )
+        return; /* No need for Git user if we are not seeding. */
+
     if ( ! cfg->git_user ) {
         if ( (cfg->git_user = read_line_from_pipe("git config --get user.name")) )
             mr_register(NULL, cfg->git_user, 0);
@@ -200,22 +239,7 @@ get_git_user_info(odk_run_config_t *cfg)
     }
 }
 
-static void
-handle_owlapi_option(odk_run_config_t *cfg, char *option)
-{
-    char *property, *value, *errmsg;
-
-    if ( strcmp("help", option) == 0 ) {
-        list_owlapi_options(stdout);
-        exit(0);
-    }
-
-    if ( get_owlapi_java_property(option, &property, &value, &errmsg) < 0 )
-        errx(EXIT_FAILURE, "Invalid --owlapi-option argument: %s", errmsg);
-
-    odk_add_java_property(cfg, property, value);
-}
-
+/* Checks whether the specified directory is a ODK repository. */
 static int
 is_odk_repository(const char *directory)
 {
@@ -238,6 +262,7 @@ is_odk_repository(const char *directory)
     return ret;
 }
 
+/* Sets and binds the ODK working directory. */
 static void
 set_work_directory(odk_run_config_t *cfg)
 {
@@ -360,9 +385,6 @@ main(int argc, char **argv)
         }
     }
 
-    set_work_directory(&cfg);
-    set_github_token(&cfg);
-
     if ( backend_init(&backend) == -1 )
         err(EXIT_FAILURE, "Cannot initialise backend");
 
@@ -375,8 +397,9 @@ main(int argc, char **argv)
     if ( cfg.n_java_opts )
         mr_register(NULL, odk_make_java_args(&cfg, 1), 1);
 
-    if ( cfg.flags & ODK_FLAG_SEEDMODE )
-        get_git_user_info(&cfg);
+    set_work_directory(&cfg);
+    set_github_token(&cfg);
+    set_git_user(&cfg);
 
     if ( backend.prepare )
         ret = backend.prepare(&backend, &cfg);

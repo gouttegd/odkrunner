@@ -169,7 +169,6 @@ get_total_memory(odk_backend_info_t *info)
     return ret;
 }
 
-
 int
 odk_backend_docker_init(odk_backend_t *backend)
 {

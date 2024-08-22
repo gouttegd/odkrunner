@@ -1,5 +1,5 @@
 /*
- * ODKjRunner
+ * ODK Runner
  * Copyright (C) 2024 Damien Goutte-Gattat
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,10 @@ extern "C" {
 #endif
 
 int
-get_owlapi_java_property(char *arg, char **property, char **value, char **error);
+get_owlapi_java_property(char *, char **, char **, char **);
 
 void
-list_owlapi_options(FILE *f);
+list_owlapi_options(FILE *);
 
 #ifdef __cplusplus
 }

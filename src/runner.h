@@ -43,6 +43,7 @@ typedef struct odk_var {
     const char *value;
 } odk_var_t;
 
+/* Backend-independant ODK configuration. */
 typedef struct odk_run_config {
     const char         *image_name;
     const char         *image_tag;
@@ -58,8 +59,6 @@ typedef struct odk_run_config {
     unsigned            flags;
 } odk_run_config_t;
 
-typedef int (*odk_run_command)(odk_run_config_t *, char**);
-
 #define ODK_FLAG_TIMEDEBUG  0x0001
 #define ODK_FLAG_RUNASROOT  0x0002
 #define ODK_FLAG_SEEDMODE   0x0004
@@ -69,25 +68,25 @@ extern "C" {
 #endif
 
 void
-odk_init_config(odk_run_config_t *cfg);
+odk_init_config(odk_run_config_t *);
 
 void
-odk_free_config(odk_run_config_t *cfg);
+odk_free_config(odk_run_config_t *);
 
 int
-odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst);
+odk_add_binding(odk_run_config_t *, const char *, const char *);
 
 void
-odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value);
+odk_add_env_var(odk_run_config_t *, const char *, const char *);
 
 void
-odk_add_java_opt(odk_run_config_t *cfg, const char *option);
+odk_add_java_opt(odk_run_config_t *, const char *);
 
 void
-odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value);
+odk_add_java_property(odk_run_config_t *, const char *, const char *);
 
 char *
-odk_make_java_args(odk_run_config_t *cfg, int);
+odk_make_java_args(odk_run_config_t *, int);
 
 #ifdef __cplusplus
 }

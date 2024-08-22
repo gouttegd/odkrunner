@@ -46,6 +46,14 @@
 #include <sbuffer.h>
 #endif
 
+/**
+ * Spawns a new process to execute the specified command.
+ *
+ * @param argv The command to execute, as a NULL-terminated array of
+ *             arguments.
+ *
+ * @return 0 if successful, or -1 if an error occured.
+ */
 int
 spawn_process(char **argv)
 {

@@ -108,7 +108,6 @@ close(odk_backend_t *backend)
 
 #endif /* !ODK_RUNNER_WINDOWS */
 
-
 int
 odk_backend_native_init(odk_backend_t *backend)
 {
