@@ -1,0 +1,105 @@
+.TH ODKRUN 1 2024-08-22 "odkrun @PACKAGE_VERSION@"
+
+.SH NAME
+odkrun - ODK Runner tool
+
+.SH SYNOPSIS
+.SY odkrun
+.RB [ -h | --help ]
+.RB [ -v | --version ]
+.RB [ -d | --debug ]
+.RB [ -i | --image
+.IR name ]
+.RB [ -t | --tag
+.IR tag ]
+.RB [ -l | --lite ]
+.RB [ -s | --singulary ]
+.RB [ -n | --native ]
+.RB [ --root ]
+.RB [ -e | --env
+.IR name=value ]
+.RB [ --java-property
+.IR name=value ]
+.RB [ --owlapi-option
+.IR name=value ]
+.RB [ seed | command ... ]
+.YS
+
+.SH DESCRIPTION
+.PP
+.B odkrun
+starts a ODK container and executes a command within it.
+
+.SH GENERAL OPTIONS
+.TP
+.BR -h ", " --help
+Display the help message.
+.TP
+.BR -v ", " --version
+Display the version message.
+.TP
+.BR -d ", " --debug
+Print debug informations when running.
+
+.SH IMAGE OPTIONS
+.TP
+.BR -i ", " --image " " \fIname\fR
+Use the specified Docker image. If not specified, the default
+is to use the \fIobolibrary/odkfull\fR image.
+.TP
+.BR -t ", " --tag " " \fItag\fR
+Use the specified image tag. If not specified, the default
+is to use the \fIlatest\fR tag.
+.TP
+.BR -l ", " --lite
+Use the \fIobolibrary/odklite\fR image.
+
+.SH BACKEND OPTIONS
+.TP
+.BR -s ", " --singularity
+Run the container with Singularity rather than Docker. This
+is experimental but should mostly work.
+.TP
+.BR -n ", " --native
+Run in the native system rather than in a container. This is
+VERY experimental and likely not to work. This assumes that
+all tools of the ODK are somehow available in the system PATH.
+.TP
+.BR --root
+Run as a superuser within the container.
+
+.SH PASSING SETTINGS TO THE CONTAINER
+.TP
+.BR -e ", " --env " " \fIname=value\fR
+Pass an environment variable.
+.TP
+.BR --java-property " " \fIname=value\fR
+Pass a Java system property to Java programs (mostly ROBOT)
+within the container.
+.TP
+.BR --owlapi-option " " \fIname=value\fR
+Pass an option to the OWLAPI library. To list available
+options, use \fI--owlapi-option=help\fR.
+
+.SH SEEDING MODE
+.PP
+If the first non-option (positional) argument is \fIseed\fR,
+.B odkrun
+will automatically invoke the \fIodk.py seed\fR command
+inside the container, and the rest of the arguments on the
+command line will be passed to that command.
+
+.SH REPORTING BUGS
+.PP
+Report bugs to
+.MT @PACKAGE_BUGREPORT@
+Damien Goutte-Gattat
+.ME .
+
+.SH COPYRIGHT
+.ad l
+.PP
+Copyright \(co 2024 Damien Goutte-Gattat
+.PP
+This program is released under the 3-clause BSD license.
+See the COPYING file in the source distribution.

@@ -48,7 +48,7 @@ AS_CASE([$host],
         [AC_MSG_ERROR(["Unsupported host: ${host}"])])
 
 dnl Output files
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile doc/odkrun.1])
 AC_OUTPUT
 
 dnl Summary

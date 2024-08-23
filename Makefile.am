@@ -25,3 +25,5 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib
 DEFS = -DFAIL_ON_ENOMEM @DEFS@
 
 LDADD = $(LIBOBJS)
+
+dist_man_MANS = doc/odkrun.1
