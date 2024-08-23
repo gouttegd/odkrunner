@@ -56,7 +56,7 @@ static void
 usage(int status)
 {
     puts("\
-Usage: odkrun [options] [COMMAND...]\n\
+Usage: odkrun [options] [seed|COMMAND...]\n\
 Start a ODK container.\n");
 
     puts("General options:\n\
@@ -91,15 +91,6 @@ Start a ODK container.\n");
         --owlapi-option NAME=VALUE\n\
                         Pass an option to the OWLAPI library. To list\n\
                         available options, use '--owlapi-option=help'.\n\
-");
-
-    puts("Seeding mode options:\n\
-        --seed OPTIONS  Seed a new ODK repository.\n\
-        --gitname NAME  Set the Git user name. The default is to obtain\n\
-                        the name from the local Git configuration.\n\
-        --gitemail EMAIL\n\
-                        Set the Git user email. The default is to obtain\n\
-                        the email from the local Git configuration.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -221,21 +212,24 @@ set_github_token(odk_run_config_t *cfg)
 static void
 set_git_user(odk_run_config_t *cfg)
 {
-    if ( ! (cfg->flags & ODK_FLAG_SEEDMODE) )
-        return; /* No need for Git user if we are not seeding. */
+    char *git_user = NULL, *git_email = NULL;
 
-    if ( ! cfg->git_user ) {
-        if ( (cfg->git_user = read_line_from_pipe("git config --get user.name")) )
-            mr_register(NULL, cfg->git_user, 0);
-        else
-            err(EXIT_FAILURE, "Cannot get Git user name (needed for --seed)");
+    if ( ! (git_user = getenv("GIT_AUTHOR_NAME")) )
+        if ( (git_user = read_line_from_pipe("git config --get user.name")) )
+            mr_register(NULL, git_user, 0);
+
+    if ( ! (git_email = getenv("GIT_AUTHOR_EMAIL")) )
+        if ( (git_email = read_line_from_pipe("git config --get user.email")) )
+            mr_register(NULL, git_email, 0);
+
+    if ( git_user ) {
+        odk_add_env_var(cfg, "GIT_AUTHOR_NAME", git_user);
+        odk_add_env_var(cfg, "GIT_COMMITTER_NAME", git_user);
     }
 
-    if ( ! cfg->git_email ) {
-        if ( (cfg->git_email = read_line_from_pipe("git config --get user.email")) )
-            mr_register(NULL, cfg->git_email, 0);
-        else
-            errx(EXIT_FAILURE, "Cannot get Git user email (needed for --seed)");
+    if ( git_email ) {
+        odk_add_env_var(cfg, "GIT_AUTHOR_EMAIL", git_email);
+        odk_add_env_var(cfg, "GIT_COMMITTER_EMAIL", git_email);
     }
 }
 
@@ -303,9 +297,6 @@ main(int argc, char **argv)
         { "root",           0, NULL, 256 },
         { "owlapi-option",  1, NULL, 257 },
         { "java-property",  1, NULL, 258 },
-        { "seed",           0, NULL, 259 },
-        { "gitname",        1, NULL, 260 },
-        { "gitemail",       1, NULL, 261 },
         { NULL,             0, NULL, 0 }
     };
 
@@ -370,19 +361,13 @@ main(int argc, char **argv)
         case 257:
             handle_owlapi_option(&cfg, optarg);
             break;
-
-        case 259:
-            cfg.flags |= ODK_FLAG_SEEDMODE;
-            break;
-
-        case 260:
-            cfg.git_user = optarg;
-            break;
-
-        case 261:
-            cfg.git_email = optarg;
-            break;
         }
+    }
+
+    if ( optind < argc && strcmp("seed", argv[optind]) == 0 ) {
+        cfg.flags |= ODK_FLAG_SEEDMODE;
+        optind += 1;
+        set_git_user(&cfg);
     }
 
     if ( backend_init(&backend) == -1 )
@@ -399,7 +384,6 @@ main(int argc, char **argv)
 
     set_work_directory(&cfg);
     set_github_token(&cfg);
-    set_git_user(&cfg);
 
     if ( backend.prepare )
         ret = backend.prepare(&backend, &cfg);

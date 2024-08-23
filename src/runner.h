@@ -54,8 +54,6 @@ typedef struct odk_run_config {
     size_t              n_env_vars;
     size_t              n_java_opts;
     odk_var_t          *java_opts;
-    char               *git_user;
-    char               *git_email;
     unsigned            flags;
 } odk_run_config_t;
 
