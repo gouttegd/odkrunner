@@ -130,6 +130,62 @@ get_owlapi_java_property(char *arg, char **property, char **value, char **error)
     return opt_name && ok ? 0 : -1;
 }
 
+/**
+ * Gets the Java property that corresponds to a given OWLAPI
+ * configuration name.
+ *
+ * @param[in] optname   The name of the configuration option.
+ * @param[in] value     The option value (will be checked for validity).
+ * @param[out] property If successful, will hold the corresponding Java
+ *                      property as a static string.
+ * @param[out] error    If an error occurs, will hold an error message
+ *                      in a newly allocated buffer.
+ *
+ * @return 0 upon success, or -1 if an error occurs.
+ */
+int
+get_owlapi_java_property_from_name(char *optname, char *value, char **property, char **error)
+{
+    char *endptr;
+    int ok = 1;
+
+    *property = NULL;
+
+#define OWLAPI_OPTION(symbol, name, type, ...)                              \
+    if ( strcmp(#symbol, optname) == 0 ) {                                  \
+        switch ( type ) {                                                   \
+        case OWLAPI_OPTION_INTEGER:                                         \
+            *property = OWLAPI_OPTION_NAMESPACE "." #symbol;                \
+            strtol(value, &endptr, 10);                                     \
+            ok = *endptr == '\0';                                           \
+            break;                                                          \
+                                                                            \
+        case OWLAPI_OPTION_BOOLEAN:                                         \
+            *property = OWLAPI_OPTION_NAMESPACE "." #symbol;                \
+            ok = is_valid_enum_value(value, "true", "false", NULL);         \
+            break;                                                          \
+                                                                            \
+        case OWLAPI_OPTION_ENUM:                                            \
+            *property = OWLAPI_OPTION_NAMESPACE "." #symbol;                \
+            ok = is_valid_enum_value(value, __VA_ARGS__);                   \
+            break;                                                          \
+                                                                            \
+        case OWLAPI_OPTION_STRING:                                          \
+            *property = OWLAPI_OPTION_NAMESPACE "." #symbol;                \
+            break;                                                          \
+        }                                                                   \
+    }
+#include "owlapi-options.h"
+#undef OWLAPI_OPTION
+
+    if ( ! *property )
+        xasprintf(error, "Unknown option %s", optname);
+    else if ( ! ok )
+        xasprintf(error, "Invalid value '%s' for option %s", value, optname);
+
+    return *property && ok ? 0 : -1;
+}
+
 /*
  * Prints all values from the NULL-terminated variable list of arguments.
  */

@@ -48,6 +48,7 @@
 #include "backend-singularity.h"
 #include "backend-native.h"
 #include "owlapi.h"
+#include "runconf.h"
 
 
 /* Help and information about the program. */
@@ -304,6 +305,9 @@ main(int argc, char **argv)
     setlocale(LC_ALL, "");
 
     odk_init_config(&cfg);
+
+    if ( load_run_conf(&cfg) == -1 )
+        err(EXIT_FAILURE, "Cannot load run.sh.conf");
 
     while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:", options, NULL)) != -1 ) {
         switch ( c ) {

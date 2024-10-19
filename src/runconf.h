@@ -28,26 +28,20 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ICP20240820_OWLAPI_H
-#define ICP20240820_OWLAPI_H
+#ifndef ICP20241016_RUNCONF_H
+#define ICP20241016_RUNCONF_H
 
-#include <stdio.h>
+#include "runner.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int
-get_owlapi_java_property(char *, char **, char **, char **);
-
-int
-get_owlapi_java_property_from_name(char *, char *, char **, char **);
-
-void
-list_owlapi_options(FILE *);
+load_run_conf(odk_run_config_t *);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* !ICP20240820_OWLAPI_H */
+#endif /* !ICP20241016_RUNCONF_H */

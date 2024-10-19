@@ -89,6 +89,42 @@ will automatically invoke the \fIodk.py seed\fR command
 inside the container, and the rest of the arguments on the
 command line will be passed to that command.
 
+.SH CONFIGURATION FILE
+.PP
+The ODK-generated \fIrun.sh\fR script allows the use of
+a configuration file (named \fIrun.sh.conf\fR) using the
+syntax of the Bourne shell.
+.B odkrun
+will automatically attempt to parse such a file if it is
+detected in the current working directory.
+.PP
+The following options are supported:
+.TP
+.B ODK_IMAGE=\fIimage\fR
+Equivalent to the \fI--image\fR option.
+.TP
+.B ODK_TAG=\fItag\fR
+Equivalent to the \fI--tag\fR option.
+.TP
+.B ODK_DEBUG=yes
+Equivalent to the \fI--debug\fR option.
+.TP
+.B ODK_JAVA_OPTS=\fIoptions\fR
+Allows passing arbitrary Java options. No equivalent
+command-line options.
+.TP
+.B ODK_BINDS=\fI/host/path:/container/path,...\fR
+Allows to bind arbitrary volumes. No equivalent
+command-line options.
+.TP
+.B OWLAPI_\fIKEY\fR=\fIVALUE\fR
+Allows to pass options to the OWLAPI. Equivalent to
+the \fI--owlapi-option\fR option, but with a different
+syntax.
+.TP
+.B ODK_USER_ID=0
+Equivalent to the \fI--root\fR option.
+
 .SH REPORTING BUGS
 .PP
 Report bugs to
