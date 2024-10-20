@@ -189,7 +189,8 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                 else
                     DO_WARN("Ignoring \"ODK_USER_ID\" with value other than 0", NULL);
             } else
-                DO_WARN("Ignoring unsupported option \"%s\"", line);
+                /* Pass any other option as an environment variable */
+                odk_add_env_var(cfg, mr_strdup(NULL, line), mr_strdup(NULL, value));
         }
     }
 

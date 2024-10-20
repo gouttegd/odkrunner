@@ -98,6 +98,11 @@ syntax of the Bourne shell.
 will automatically attempt to parse such a file if it is
 detected in the current working directory.
 .PP
+Lines starting with \fI#\fR are ignored. Options must be
+of the form \fIKEY=VALUE\fR. The value must be enclosed
+in either single or double quotes if it contains any
+space.
+.PP
 The following options are supported:
 .TP
 .B ODK_IMAGE=\fIimage\fR
@@ -124,6 +129,10 @@ syntax.
 .TP
 .B ODK_USER_ID=0
 Equivalent to the \fI--root\fR option.
+.PP
+Any other option found in the configuration file is
+passed verbatim to the ODK container as an environment
+variable.
 
 .SH REPORTING BUGS
 .PP
