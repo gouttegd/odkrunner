@@ -37,6 +37,8 @@
 #include <string.h>
 #include <err.h>
 
+#include <xmem.h>
+
 #include "util.h"
 #include "memreg.h"
 #include "owlapi.h"
@@ -57,9 +59,8 @@
 static int
 process_bind_spec(char *spec, size_t lineno, odk_run_config_t *cfg)
 {
-    char *dst, *options;
+    char *dst, *options, *tmp = NULL;
 
-    /* TODO: Expand '~' at the beginning of the host directory path */
     dst = strchr(spec, ':');
 #if defined (ODK_RUNNER_WINDOWS)
     /* We need to ignore the ':' after the drive letter */
@@ -79,10 +80,29 @@ process_bind_spec(char *spec, size_t lineno, odk_run_config_t *cfg)
         *options++ = '\0';
     }
 
+    if ( *spec == '~' ) {
+        char *home;
+
+#if defined (ODK_RUNNER_WINDOWS)
+        if ( (home = getenv("USERPROFILE")) ) {
+#else
+        if ( (home = getenv("HOME")) ) {
+#endif
+            xasprintf(&tmp, "%s%s", home, spec + 1);
+            spec = tmp;
+        } else {
+            warnx(RUNCONF_FILENAME ":%lu:Cannot expand '~' in binding \"%s:%s\"", lineno, spec, dst);
+            return -1;
+        }
+    }
+
     if ( odk_add_binding(cfg, spec, mr_strdup(NULL, dst)) == -1 ) {
         warn(RUNCONF_FILENAME ":%lu:Cannot add binding \"%s:%s\"", lineno, spec, dst);
         return -1;
     }
+
+    if ( tmp )
+        free(tmp);
 
     return 0;
 }
