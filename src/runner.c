@@ -189,6 +189,9 @@ odk_add_java_opt(odk_run_config_t *cfg, const char *option)
     assert(cfg != NULL);
     assert(option != NULL);
 
+    if ( strncmp(option, "-Xmx", 4) == 0 )
+        cfg->flags |= ODK_FLAG_JAVAMEMSET;
+
     add_var(&(cfg->java_opts), &(cfg->n_java_opts), option, NULL);
 }
 

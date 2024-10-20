@@ -60,6 +60,7 @@ typedef struct odk_run_config {
 #define ODK_FLAG_TIMEDEBUG  0x0001
 #define ODK_FLAG_RUNASROOT  0x0002
 #define ODK_FLAG_SEEDMODE   0x0004
+#define ODK_FLAG_JAVAMEMSET 0x2000
 
 #ifdef __cplusplus
 extern "C" {

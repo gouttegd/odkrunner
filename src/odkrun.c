@@ -377,7 +377,7 @@ main(int argc, char **argv)
     if ( backend_init(&backend) == -1 )
         err(EXIT_FAILURE, "Cannot initialise backend");
 
-    if ( backend.info.total_memory > 0 ) {
+    if ( backend.info.total_memory > 0 && (cfg.flags & ODK_FLAG_JAVAMEMSET) == 0 ) {
         unsigned long java_mem = backend.info.total_memory * 0.9;
         if ( java_mem > 1024*1024*1024 )
             odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)));
