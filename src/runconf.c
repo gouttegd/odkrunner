@@ -60,15 +60,21 @@ process_bind_spec(char *spec, size_t lineno, odk_run_config_t *cfg)
     char *dst, *options;
 
     /* TODO: Expand '~' at the beginning of the host directory path */
+    dst = strchr(spec, ':');
+#if defined (ODK_RUNNER_WINDOWS)
+    /* We need to ignore the ':' after the drive letter */
+    if ( dst == spec + 1 && *(dst + 1) != '\0' )
+        dst = strchr(dst + 1, ':');
+#endif
 
-    if ( ! (dst = strchr(spec, ':')) ) {
+    if ( ! dst || *(dst + 1) == '\0' || *(dst + 1) == ':' ) {
         warnx(RUNCONF_FILENAME ":%lu:Ignoring invalid \"ODK_BINDS\" value \"%s\"", lineno, spec);
         return -1;
     }
 
     *dst++ = '\0';
     if ( (options = strchr(dst, ':')) ) {
-        /* TODO: Bind options are not supported yed */
+        /* TODO: Bind options are not supported yet */
         warnx(RUNCONF_FILENAME ":%lu:Ignoring unsupported binding option for \"%s:%s\"", lineno, spec, dst);
         *options++ = '\0';
     }
