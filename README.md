@@ -58,6 +58,11 @@ $ odkrun -l make refresh-imports
 
 See the output of `odkrun --help` for a list of possible options.
 
+The runner supports the shell-based configuration file used by the
+ODK-generated `run.sh` wrapper script. If the current working directory
+contains a file named `run.sh.conf`, the runner will attempt to parse
+that file and use the options it may contain.
+
 ### Seeding
 
 The runner can also replace the `seed-via-docker.sh` script to

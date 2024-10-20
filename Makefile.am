@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4 --install
 
-dist_doc_DATA = AUTHORS COPYING README.md
+dist_doc_DATA = AUTHORS COPYING NEWS README.md
 
 bin_PROGRAMS = odkrun
 
