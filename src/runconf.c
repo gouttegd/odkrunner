@@ -41,6 +41,7 @@
 
 #include "util.h"
 #include "memreg.h"
+#include "oaklib.h"
 #include "owlapi.h"
 
 #define RUNCONF_FILENAME "run.sh.conf"
@@ -155,6 +156,8 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                 odk_set_image_name(cfg, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
             else if ( strcmp(line, "ODK_TAG") == 0 )
                 odk_set_image_tag(cfg, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
+            else if ( strcmp(line, "ODK_SHARE_OAK_CACHE") == 0 )
+                odk_set_oak_cache_directory(cfg, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
             else if ( strcmp(line, "ODK_DEBUG") == 0 && strcmp(value, "yes") == 0 ) {
                 cfg->flags |= ODK_FLAG_TIMEDEBUG;
                 odk_add_env_var(cfg, "ODK_DEBUG", "yes", ODK_NO_OVERWRITE);

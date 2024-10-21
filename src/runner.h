@@ -52,8 +52,9 @@ typedef struct odk_run_config {
     size_t              n_bindings;
     odk_var_t          *env_vars;
     size_t              n_env_vars;
-    size_t              n_java_opts;
     odk_var_t          *java_opts;
+    size_t              n_java_opts;
+    const char         *oak_cache_directory;
     unsigned            flags;
 } odk_run_config_t;
 
@@ -61,6 +62,7 @@ typedef struct odk_run_config {
 #define ODK_FLAG_RUNASROOT  0x0002
 #define ODK_FLAG_SEEDMODE   0x0004
 #define ODK_FLAG_JAVAMEMSET 0x2000
+#define ODK_FLAG_INODKREPO  0x4000
 
 #define ODK_NO_OVERWRITE    0x0001
 
@@ -79,6 +81,9 @@ odk_set_image_name(odk_run_config_t *, const char *, int);
 
 void
 odk_set_image_tag(odk_run_config_t *, const char *, int);
+
+void
+odk_set_oak_cache_directory(odk_run_config_t *, const char *, int);
 
 int
 odk_add_binding(odk_run_config_t *, const char *, const char *, int);

@@ -46,6 +46,7 @@
 
 static char *DEFAULT_IMAGE_NAME = "obolibrary/odkfull";
 static char *DEFAULT_IMAGE_TAG  = "latest";
+static char *DEFAULT_OAK_CACHE  = NULL;
 
 /**
  * Initialises a ODK configuration structure.
@@ -64,6 +65,7 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->n_env_vars = 0;
     cfg->java_opts = NULL;
     cfg->n_java_opts = 0;
+    cfg->oak_cache_directory = DEFAULT_OAK_CACHE;
     cfg->flags = 0;
 }
 
@@ -128,6 +130,23 @@ odk_set_image_tag(odk_run_config_t *cfg, const char *tag, int fgs)
 {
     if ( (cfg->image_tag == DEFAULT_IMAGE_TAG) || (fgs & ODK_NO_OVERWRITE) == 0 )
         cfg->image_tag = tag;
+}
+
+/**
+ * Sets the OAK cache directory to share with the container.
+ *
+ * @param cfg The ODK configuration to update.
+ * @param tag The path to the OAK cache directory (or the special values
+ *            "user" or "repo"). The pointer must remain valid for the
+ *            lifetime of the configuration.
+ * @param fgs If ODK_NO_OVERWRITE is set, only set the cache directory
+ *            if the currently configured directory is the default one.
+ */
+void
+odk_set_oak_cache_directory(odk_run_config_t *cfg, const char *dir, int fgs)
+{
+    if ( (cfg->oak_cache_directory == DEFAULT_OAK_CACHE) || (fgs & ODK_NO_OVERWRITE) == 0 )
+        cfg->oak_cache_directory = dir;
 }
 
 /**

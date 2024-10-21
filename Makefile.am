@@ -19,6 +19,7 @@ odkrun_SOURCES = src/odkrun.c \
 		 src/backend-native.c src/backend-native.h \
 		 src/owlapi.c src/owlapi.h src/owlapi-options.h \
 		 src/runconf.c src/runconf.h \
+		 src/oaklib.h src/oaklib.c \
 		 $(convlib_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir)/lib

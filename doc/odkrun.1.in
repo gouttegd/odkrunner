@@ -22,6 +22,9 @@ odkrun - ODK Runner tool
 .IR name=value ]
 .RB [ --owlapi-option
 .IR name=value ]
+.RB [ -k | --oak-cache
+.IR cache ]
+.RB [ -K | --oak-user-cache ]
 .RB [ seed | command ... ]
 .YS
 
@@ -68,7 +71,7 @@ all tools of the ODK are somehow available in the system PATH.
 .BR --root
 Run as a superuser within the container.
 
-.SH PASSING SETTINGS TO THE CONTAINER
+.SH PASSING SETTINGS AND DATA TO THE CONTAINER
 .TP
 .BR -e ", " --env " " \fIname=value\fR
 Pass an environment variable.
@@ -80,6 +83,17 @@ within the container.
 .BR --owlapi-option " " \fIname=value\fR
 Pass an option to the OWLAPI library. To list available
 options, use \fI--owlapi-option=help\fR.
+.TP
+.BR -k ", " --oak-cache " " \fIcache\fR
+Share the specified directory as a OAK cache directory
+within the container. If \fIcache\fR is set to \fIuser\fR,
+the user's own OAK cache directory is shared; if set to
+\fIrepo\fR, the tmp/oaklib directory is shared (only if the
+runner is started from within an ODK repository); any other
+value is interpreted as the path to the directory to share.
+.TP
+.BR -K ", " --oak-user-cache
+Equivalent to \fI--oak-cache=user\fR.
 
 .SH SEEDING MODE
 .PP
@@ -110,6 +124,9 @@ Equivalent to the \fI--image\fR option.
 .TP
 .B ODK_TAG=\fItag\fR
 Equivalent to the \fI--tag\fR option.
+.TP
+.B ODK_SHARE_OAK_CACHE=\fIcache\fR
+Equivalent to the \fI--oak-cache\fR option.
 .TP
 .B ODK_DEBUG=yes
 Equivalent to the \fI--debug\fR option.

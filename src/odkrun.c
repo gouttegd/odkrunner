@@ -47,6 +47,7 @@
 #include "backend-docker.h"
 #include "backend-singularity.h"
 #include "backend-native.h"
+#include "oaklib.h"
 #include "owlapi.h"
 #include "runconf.h"
 
@@ -83,7 +84,7 @@ Start a ODK container.\n");
         --root          Run as a superuser within the container.\n\
 ");
 
-    puts("Passing settings to the container:\n\
+    puts("Passing settings and data to the container:\n\
     -e, --env NAME=VALUE\n\
                         Pass an environment variable.\n\
         --java-property NAME=VALUE\n\
@@ -92,6 +93,10 @@ Start a ODK container.\n");
         --owlapi-option NAME=VALUE\n\
                         Pass an option to the OWLAPI library. To list\n\
                         available options, use '--owlapi-option=help'.\n\
+    -k, --oak-cache [user|repo|PATH]\n\
+                        Share a OAK cache directory with the container.\n\
+    -K, --oak-user-cache\n\
+                        Equivalent to '--oak-cache=user'.\n\
 ");
 
     printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -266,6 +271,7 @@ set_work_directory(odk_run_config_t *cfg)
     if ( is_odk_repository(cwd) ) {
         cwd = "../..";
         cfg->work_directory = "/work/src/ontology";
+        cfg->flags |= ODK_FLAG_INODKREPO;
     }
 
     if ( odk_add_binding(cfg, cwd, "/work", 0) == -1 )
@@ -295,6 +301,8 @@ main(int argc, char **argv)
         { "singularity",    0, NULL, 's' },
         { "native",         0, NULL, 'n' },
         { "env",            1, NULL, 'e' },
+        { "oak-cache",      1, NULL, 'k' },
+        { "oak-user-cache", 0, NULL, 'K' },
         { "root",           0, NULL, 256 },
         { "owlapi-option",  1, NULL, 257 },
         { "java-property",  1, NULL, 258 },
@@ -306,7 +314,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:k:K", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
@@ -343,6 +351,14 @@ main(int argc, char **argv)
 
         case 'n':
             backend_init = odk_backend_native_init;
+            break;
+
+        case 'k':
+            odk_set_oak_cache_directory(&cfg, optarg, 0);
+            break;
+
+        case 'K':
+            odk_set_oak_cache_directory(&cfg, "user", 0);
             break;
 
         case 256:
@@ -388,6 +404,9 @@ main(int argc, char **argv)
 
     set_work_directory(&cfg);
     set_github_token(&cfg);
+
+    if ( cfg.oak_cache_directory && share_oaklib_cache(&cfg, cfg.oak_cache_directory) == -1 )
+        err(EXIT_FAILURE, "Cannot share OAK cache directory");
 
     if ( backend.prepare )
         ret = backend.prepare(&backend, &cfg);
