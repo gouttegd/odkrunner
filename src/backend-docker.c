@@ -35,6 +35,7 @@
 #include "backend-docker.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #if defined(ODK_RUNNER_LINUX)
@@ -87,10 +88,12 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 {
     int rc;
     size_t n, i = 0;
-    char **argv, **cursor;
+    char **argv, **cursor, *image_qualifier;
     mem_registry_t mr = { 0 };
 
     (void) backend;
+
+    image_qualifier = strchr(cfg->image_name, '/') ? "" : "obolibrary/";
 
     /* Number of tokens in the command line */
     n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
@@ -119,7 +122,7 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
             argv[i++] = mr_sprintf(&mr, "%s=%s", cfg->env_vars[j].name, cfg->env_vars[j].value);
         }
     }
-    argv[i++] = mr_sprintf(&mr, "%s:%s", cfg->image_name, cfg->image_tag);
+    argv[i++] = mr_sprintf(&mr, "%s%s:%s", image_qualifier, cfg->image_name, cfg->image_tag);
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
         argv[i++] = "/usr/bin/time";
         argv[i++] = "-f";

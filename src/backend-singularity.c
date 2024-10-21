@@ -34,6 +34,8 @@
 
 #include "backend-singularity.h"
 
+#include <string.h>
+
 #if defined(ODK_RUNNER_LINUX)
 #include <unistd.h> /* for getuid/getgid */
 #endif
@@ -78,11 +80,13 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
 {
     int rc;
     size_t n, i = 0;
-    char **argv, **cursor;
+    char **argv, **cursor, *image_qualifier;
     mem_registry_t mr = { 0 };
     string_buffer_t sb;
 
     (void) backend;
+
+    image_qualifier = strchr(cfg->image_name, '/') ? "" : "obolibrary/";
 
     /* Number of tokens in the command line */
     n = 7;
@@ -127,7 +131,7 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
     }
     argv[i++] = "-W";
     argv[i++] = (char *)cfg->work_directory;
-    argv[i++] = mr_sprintf(&mr, "docker://%s:%s", cfg->image_name, cfg->image_tag);
+    argv[i++] = mr_sprintf(&mr, "docker://%s%s:%s", image_qualifier, cfg->image_name, cfg->image_tag);
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
         argv[i++] = "/usr/bin/time";
         argv[i++] = "-f";
