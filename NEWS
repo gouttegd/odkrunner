@@ -1,3 +1,10 @@
+Changes in odkrunner 0.2.1 (2024-10-21)
+---------------------------------------
+
+    * Allow omitting the 'obolibrary/' qualifier in image names.
+    * Add the --oak-cache option to share the host's OAK cache directory.
+
+
 Changes in odkrunner 0.2.0 (2024-10-20)
 ---------------------------------------
 
