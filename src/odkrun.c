@@ -306,9 +306,6 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    if ( load_run_conf(&cfg) == -1 )
-        err(EXIT_FAILURE, "Cannot load run.sh.conf");
-
     while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
@@ -367,6 +364,9 @@ main(int argc, char **argv)
             break;
         }
     }
+
+    if ( load_run_conf(&cfg) == -1 )
+        err(EXIT_FAILURE, "Cannot load run.sh.conf");
 
     if ( optind < argc && strcmp("seed", argv[optind]) == 0 ) {
         cfg.flags |= ODK_FLAG_SEEDMODE;
