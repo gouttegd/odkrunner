@@ -64,8 +64,8 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
         char *group_id = "1000";
 #endif
 
-        odk_add_env_var(cfg, "ODK_USER_ID", user_id);
-        odk_add_env_var(cfg, "ODK_GROUP_ID", group_id);
+        odk_add_env_var(cfg, "ODK_USER_ID", user_id, 0);
+        odk_add_env_var(cfg, "ODK_GROUP_ID", group_id, 0);
     }
 
     if ( (ssh_socket = getenv("SSH_AUTH_SOCK")) &&
@@ -76,8 +76,8 @@ prepare(odk_backend_t *backend, odk_run_config_t *cfg)
          * authentication socket using a hardcoded path. */
         ssh_socket = DOCKER_SSH_SOCKET;
 #endif
-        odk_add_env_var(cfg, "SSH_AUTH_SOCK", DOCKER_SSH_SOCKET);
-        ret = odk_add_binding(cfg, ssh_socket, DOCKER_SSH_SOCKET);
+        odk_add_env_var(cfg, "SSH_AUTH_SOCK", DOCKER_SSH_SOCKET, 0);
+        ret = odk_add_binding(cfg, ssh_socket, DOCKER_SSH_SOCKET, 0);
     }
 
     return ret;

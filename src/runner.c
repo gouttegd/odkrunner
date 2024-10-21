@@ -44,6 +44,9 @@
 #include <memreg.h>
 #include <sbuffer.h>
 
+static char *DEFAULT_IMAGE_NAME = "obolibrary/odkfull";
+static char *DEFAULT_IMAGE_TAG  = "latest";
+
 /**
  * Initialises a ODK configuration structure.
  *
@@ -52,8 +55,8 @@
 void
 odk_init_config(odk_run_config_t *cfg)
 {
-    cfg->image_name = "obolibrary/odkfull";
-    cfg->image_tag = "latest";
+    cfg->image_name = DEFAULT_IMAGE_NAME;
+    cfg->image_tag = DEFAULT_IMAGE_TAG;
     cfg->work_directory = "/work";
     cfg->bindings = NULL;
     cfg->n_bindings = 0;
@@ -96,19 +99,55 @@ odk_free_config(odk_run_config_t *cfg)
 }
 
 /**
- * Adds a new binding to the configuration.
+ * Sets the image to use.
+ *
+ * @param cfg The ODK configuration to update.
+ * @param img The name of the image. The pointer must remain valid for the
+ *            lifetime of the configuration.
+ * @param fgs If ODK_NO_OVERWRITE is set, only set the image if the
+ *            currently configured image is the default one.
+ */
+void
+odk_set_image_name(odk_run_config_t *cfg, const char *img, int fgs)
+{
+    if ( (cfg->image_name == DEFAULT_IMAGE_NAME) || (fgs & ODK_NO_OVERWRITE) == 0 )
+        cfg->image_name = img;
+}
+
+/**
+ * Sets the image tag to use.
+ *
+ * @param cfg The ODK configuration to update.
+ * @param tag The name of the tag. The pointer must remain valid for the
+ *            lifetime of the configuration.
+ * @param fgs If ODK_NO_OVERWRITE is set, only set the tag if the
+ *            currently configured tag is the default one.
+ */
+void
+odk_set_image_tag(odk_run_config_t *cfg, const char *tag, int fgs)
+{
+    if ( (cfg->image_tag == DEFAULT_IMAGE_TAG) || (fgs & ODK_NO_OVERWRITE) == 0 )
+        cfg->image_tag = tag;
+}
+
+/**
+ * Adds a new binding to the configuration. If a binding with the same
+ * host-side path already exists, that binding is updated to point to
+ * the new container-side path.
  *
  * @param cfg The ODK configuration to update.
  * @param src The path to the host side of the binding.
  * @param dst The path to the container side of the binding. This
  *            pointer must remain valid for the lifetime of the
  *            configuration.
+ * @param fgs If ODK_NO_OVERWRITE is set, do not overwrite an already
+ *            existing binding with the same host path.
  *
  * @return 0 if successful, or -1 if an error occured when attempting to
  *         canonicalise the src path.
  */
 int
-odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
+odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst, int fgs)
 {
     char *path;
 
@@ -126,6 +165,14 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
             return -1;
     }
 
+    for ( unsigned i = 0; i < cfg->n_bindings; i++ ) {
+        if ( strcmp(cfg->bindings[i].host_directory, path) == 0 ) {
+            if ( (fgs & ODK_NO_OVERWRITE) == 0 )
+                cfg->bindings[i].container_directory = dst;
+            return 0;
+        }
+    }
+
     if ( cfg->n_bindings % 10 == 0 )
         cfg->bindings = xrealloc(cfg->bindings, sizeof(odk_bind_config_t) * (cfg->n_bindings + 10));
 
@@ -137,11 +184,12 @@ odk_add_binding(odk_run_config_t *cfg, const char *src, const char *dst)
 
 /* Common logic to odk_add_env_var and odk_add_java_opt. */
 static void
-add_var(odk_var_t **vars, size_t *n, const char *name, const char *value)
+add_var(odk_var_t **vars, size_t *n, const char *name, const char *value, int flags)
 {
     for ( unsigned i = 0; i < *n; i++ ) {
         if ( strcmp((*vars)[i].name, name) == 0 ) {
-            (*vars)[i].value = value;
+            if ( (flags & ODK_NO_OVERWRITE) == 0 )
+                (*vars)[i].value = value;
             return;
         }
     }
@@ -162,17 +210,19 @@ add_var(odk_var_t **vars, size_t *n, const char *name, const char *value)
  * @param name  The name of the new variable.
  * @param value The value of the variable; may be NULL to forcefully
  *              remove an existing value.
+ * @param flags If ODK_NO_OVERWRITE is set, do not overwrite an already
+ *              existing variable with the same name.
  *
  * @note Pointers for both the name and the value must remain valid for
  *       the lifetime of the configuration.
  */
 void
-odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
+odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value, int flags)
 {
     assert(cfg != NULL);
     assert(name != NULL);
 
-    add_var(&(cfg->env_vars), &(cfg->n_env_vars), name, value);
+    add_var(&(cfg->env_vars), &(cfg->n_env_vars), name, value, flags);
 }
 
 /**
@@ -182,9 +232,11 @@ odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value)
  * @param option The option to add; this should be a valid option as
  *               expected by the java command. The pointer must remain
  *               valid for the lifetime of the configuration.
+ * @param flags  Currently unused (ODK_NO_OVERWRITE has no effect, as
+ *               Java options have no value to overwrite).
  */
 void
-odk_add_java_opt(odk_run_config_t *cfg, const char *option)
+odk_add_java_opt(odk_run_config_t *cfg, const char *option, int flags)
 {
     assert(cfg != NULL);
     assert(option != NULL);
@@ -192,26 +244,29 @@ odk_add_java_opt(odk_run_config_t *cfg, const char *option)
     if ( strncmp(option, "-Xmx", 4) == 0 )
         cfg->flags |= ODK_FLAG_JAVAMEMSET;
 
-    add_var(&(cfg->java_opts), &(cfg->n_java_opts), option, NULL);
+    add_var(&(cfg->java_opts), &(cfg->n_java_opts), option, NULL, flags);
 }
 
 /**
- * Adds a Java system property to the configuration.
+ * Adds a Java system property to the configuration. If the property
+ * already exists, the previous value is updated.
  *
  * @param cfg   The ODK configuration to update.
  * @param name  The name of the property to define.
  * @param value The value of the property.
+ * @param flags If ODK_NO_OVERWRITE is set, do not overwrite an already
+ *              existing property with the same name.
  *
  * @note Pointers for both the name and the value must remain valid for
  *       the lifetime of the configuration.
  */
 void
-odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value)
+odk_add_java_property(odk_run_config_t *cfg, const char *name, const char *value, int flags)
 {
     assert(cfg != NULL);
     assert(name != NULL);
 
-    add_var(&(cfg->java_opts), &(cfg->n_java_opts), name, value);
+    add_var(&(cfg->java_opts), &(cfg->n_java_opts), name, value, flags);
 }
 
 /**
@@ -259,8 +314,8 @@ odk_make_java_args(odk_run_config_t *cfg, int to_env)
     }
 
     if ( to_env ) {
-        odk_add_env_var(cfg, "ODK_JAVA_OPTS", buffer);
-        odk_add_env_var(cfg, "ROBOT_JAVA_ARGS", buffer);
+        odk_add_env_var(cfg, "ODK_JAVA_OPTS", buffer, 0);
+        odk_add_env_var(cfg, "ROBOT_JAVA_ARGS", buffer, 0);
     }
 
     return buffer;

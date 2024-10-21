@@ -62,6 +62,8 @@ typedef struct odk_run_config {
 #define ODK_FLAG_SEEDMODE   0x0004
 #define ODK_FLAG_JAVAMEMSET 0x2000
 
+#define ODK_NO_OVERWRITE    0x0001
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -72,17 +74,23 @@ odk_init_config(odk_run_config_t *);
 void
 odk_free_config(odk_run_config_t *);
 
+void
+odk_set_image_name(odk_run_config_t *, const char *, int);
+
+void
+odk_set_image_tag(odk_run_config_t *, const char *, int);
+
 int
-odk_add_binding(odk_run_config_t *, const char *, const char *);
+odk_add_binding(odk_run_config_t *, const char *, const char *, int);
 
 void
-odk_add_env_var(odk_run_config_t *, const char *, const char *);
+odk_add_env_var(odk_run_config_t *, const char *, const char *, int);
 
 void
-odk_add_java_opt(odk_run_config_t *, const char *);
+odk_add_java_opt(odk_run_config_t *, const char *, int);
 
 void
-odk_add_java_property(odk_run_config_t *, const char *, const char *);
+odk_add_java_property(odk_run_config_t *, const char *, const char *, int);
 
 char *
 odk_make_java_args(odk_run_config_t *, int);

@@ -96,7 +96,7 @@ process_bind_spec(char *spec, size_t lineno, odk_run_config_t *cfg)
         }
     }
 
-    if ( odk_add_binding(cfg, spec, mr_strdup(NULL, dst)) == -1 ) {
+    if ( odk_add_binding(cfg, spec, mr_strdup(NULL, dst), ODK_NO_OVERWRITE) == -1 ) {
         warn(RUNCONF_FILENAME ":%lu:Cannot add binding \"%s:%s\"", lineno, spec, dst);
         return -1;
     }
@@ -152,17 +152,17 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
             if ( value_len == 0 )
                 DO_WARN("Ignoring empty value for option \"%s\"", line);
             else if ( strcmp(line, "ODK_IMAGE") == 0 )
-                cfg->image_name = mr_strdup(NULL, value);
+                odk_set_image_name(cfg, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
             else if ( strcmp(line, "ODK_TAG") == 0 )
-                cfg->image_tag = mr_strdup(NULL, value);
+                odk_set_image_tag(cfg, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
             else if ( strcmp(line, "ODK_DEBUG") == 0 && strcmp(value, "yes") == 0 ) {
                 cfg->flags |= ODK_FLAG_TIMEDEBUG;
-                odk_add_env_var(cfg, "ODK_DEBUG", "yes");
+                odk_add_env_var(cfg, "ODK_DEBUG", "yes", ODK_NO_OVERWRITE);
             } else if ( strcmp(line, "ODK_JAVA_OPTS") == 0 ) {
                 char * token;
 
                 while ( (token = strtok(value, " ")) ) {
-                    odk_add_java_opt(cfg, mr_strdup(NULL, token));
+                    odk_add_java_opt(cfg, mr_strdup(NULL, token), ODK_NO_OVERWRITE);
                     value = NULL;
                 }
             } else if ( strcmp(line, "ODK_BINDS") == 0 ) {
@@ -176,7 +176,7 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                 char *property, *errmsg = NULL;
 
                 if ( get_owlapi_java_property_from_name(line + 7, value, &property, &errmsg) != -1 )
-                    odk_add_java_property(cfg, property, mr_strdup(NULL, value));
+                    odk_add_java_property(cfg, property, mr_strdup(NULL, value), ODK_NO_OVERWRITE);
                 else {
                     DO_WARN("Ignoring invalid OWLAPI option \"%s=%s\": %s", line + 7, value, errmsg);
                     free(errmsg);
@@ -190,7 +190,7 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                     DO_WARN("Ignoring \"ODK_USER_ID\" with value other than 0", NULL);
             } else
                 /* Pass any other option as an environment variable */
-                odk_add_env_var(cfg, mr_strdup(NULL, line), mr_strdup(NULL, value));
+                odk_add_env_var(cfg, mr_strdup(NULL, line), mr_strdup(NULL, value), ODK_NO_OVERWRITE);
         }
     }
 

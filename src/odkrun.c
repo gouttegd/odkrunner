@@ -146,7 +146,7 @@ handle_owlapi_option(odk_run_config_t *cfg, char *option)
     if ( get_owlapi_java_property(option, &property, &value, &errmsg) < 0 )
         errx(EXIT_FAILURE, "Invalid --owlapi-option argument: %s", errmsg);
 
-    odk_add_java_property(cfg, property, value);
+    odk_add_java_property(cfg, property, value, 0);
 }
 
 
@@ -206,7 +206,7 @@ set_github_token(odk_run_config_t *cfg)
     }
 
     if ( token )
-        odk_add_env_var(cfg, "GH_TOKEN", token);
+        odk_add_env_var(cfg, "GH_TOKEN", token, 0);
 }
 
 /* Configures the ODK with a Git username and email. */
@@ -224,13 +224,13 @@ set_git_user(odk_run_config_t *cfg)
             mr_register(NULL, git_email, 0);
 
     if ( git_user ) {
-        odk_add_env_var(cfg, "GIT_AUTHOR_NAME", git_user);
-        odk_add_env_var(cfg, "GIT_COMMITTER_NAME", git_user);
+        odk_add_env_var(cfg, "GIT_AUTHOR_NAME", git_user, 0);
+        odk_add_env_var(cfg, "GIT_COMMITTER_NAME", git_user, 0);
     }
 
     if ( git_email ) {
-        odk_add_env_var(cfg, "GIT_AUTHOR_EMAIL", git_email);
-        odk_add_env_var(cfg, "GIT_COMMITTER_EMAIL", git_email);
+        odk_add_env_var(cfg, "GIT_AUTHOR_EMAIL", git_email, 0);
+        odk_add_env_var(cfg, "GIT_COMMITTER_EMAIL", git_email, 0);
     }
 }
 
@@ -268,7 +268,7 @@ set_work_directory(odk_run_config_t *cfg)
         cfg->work_directory = "/work/src/ontology";
     }
 
-    if ( odk_add_binding(cfg, cwd, "/work") == -1 )
+    if ( odk_add_binding(cfg, cwd, "/work", 0) == -1 )
         err(EXIT_FAILURE, "Cannot bind directory '%s'", cwd);
 }
 
@@ -325,19 +325,19 @@ main(int argc, char **argv)
 
         case 'd':
             cfg.flags |= ODK_FLAG_TIMEDEBUG;
-            odk_add_env_var(&cfg, "ODK_DEBUG", "yes");
+            odk_add_env_var(&cfg, "ODK_DEBUG", "yes", 0);
             break;
 
         case 'i':
-            cfg.image_name = optarg;
+            odk_set_image_name(&cfg, optarg, 0);
             break;
 
         case 't':
-            cfg.image_tag = optarg;
+            odk_set_image_tag(&cfg, optarg, 0);
             break;
 
         case 'l':
-            cfg.image_name = "obolibrary/odklite";
+            odk_set_image_name(&cfg, "obolibrary/odklite", 0);
             break;
 
         case 's':
@@ -354,12 +354,12 @@ main(int argc, char **argv)
 
         case 'e':
             opt_value = split_key_value_pair(optarg, "env");
-            odk_add_env_var(&cfg, optarg, opt_value);
+            odk_add_env_var(&cfg, optarg, opt_value, 0);
             break;
 
         case 258:
             opt_value = split_key_value_pair(optarg, "java-property");
-            odk_add_java_property(&cfg, optarg, opt_value);
+            odk_add_java_property(&cfg, optarg, opt_value, 0);
             break;
 
         case 257:
@@ -380,7 +380,7 @@ main(int argc, char **argv)
     if ( backend.info.total_memory > 0 && (cfg.flags & ODK_FLAG_JAVAMEMSET) == 0 ) {
         unsigned long java_mem = backend.info.total_memory * 0.9;
         if ( java_mem > 1024*1024*1024 )
-            odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)));
+            odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)), 0);
     }
 
     if ( cfg.n_java_opts )
