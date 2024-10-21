@@ -42,6 +42,8 @@
 #include "runner.h"
 
 #define OAKLIB_NAME "oaklib"
+#define USER_CACHEDIR "/home/odkuser/.data/oaklib"
+#define ROOT_CACHEDIR "/root/.data/oaklib"
 
 
 /*
@@ -142,14 +144,16 @@ int
 share_oaklib_cache(odk_run_config_t *cfg, const char *dir)
 {
     int ret = 0;
-    char cache_dir[CACHE_PATH_MAX];
+    char cache_dir[CACHE_PATH_MAX], *dest_dir;
+
+    dest_dir = (cfg->flags & ODK_FLAG_RUNASROOT) > 0 ? ROOT_CACHEDIR : USER_CACHEDIR;
 
     if ( strcasecmp(ODK_SHARING_OAKLIB_USER_CACHE, dir) == 0 ) {
         if ( get_oaklib_cache_directory(cache_dir, CACHE_PATH_MAX) >= CACHE_PATH_MAX ) {
             ret = -1;
             errno = ENAMETOOLONG;
         } else
-            odk_add_binding(cfg, cache_dir, "/home/odkuser/.data/oaklib", 0);
+            odk_add_binding(cfg, cache_dir, dest_dir, 0);
     } else if ( strcasecmp(ODK_SHARING_OAKLIB_REPO_CACHE, dir) == 0 ) {
         /* Only effective when within an ODK repo, otherwise ignored. */
         if ( (cfg->flags & ODK_FLAG_INODKREPO) > 0 ) {
@@ -161,7 +165,7 @@ share_oaklib_cache(odk_run_config_t *cfg, const char *dir)
         }
     } else {
         /* Arbitrary cache dir, we pass it as it is. */
-        odk_add_binding(cfg, cfg->oak_cache_directory, "/home/odkuser/.data/oaklib", 0);
+        odk_add_binding(cfg, dir, dest_dir, 0);
     }
 
     return ret;
