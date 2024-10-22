@@ -190,7 +190,7 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                 if ( *value == '0' && *(value + 1) == '\0' )
                     cfg->flags |= ODK_FLAG_RUNASROOT;
                 else
-                    DO_WARN("Ignoring \"ODK_USER_ID\" with value other than 0", NULL);
+                    DO_WARN("Ignoring \"ODK_USER_ID\" with value other than 0 (%s)", value);
             } else
                 /* Pass any other option as an environment variable */
                 odk_add_env_var(cfg, mr_strdup(NULL, line), mr_strdup(NULL, value), ODK_NO_OVERWRITE);
