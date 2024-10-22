@@ -251,3 +251,28 @@ load_run_conf(odk_run_config_t *cfg)
 
     return ret;
 }
+
+extern char **environ;
+
+/**
+ * Loads ODK_* and OWLAPI_* variables from the environment.
+ * Those variables are then processed as if they had been found in a
+ * run.sh.conf file.
+ *
+ * @param cfg The configuration to update.
+ */
+void
+load_conf_from_env(odk_run_config_t *cfg)
+{
+    char **env_var = environ;
+    char *copy;
+
+    for ( ; *env_var ; env_var++ ) {
+        if ( strncmp("ODK_", *env_var, 4) == 0 || strncmp("OWLAPI_", *env_var, 7) == 0 ) {
+            copy = xstrdup(*env_var);
+            process_line(copy, strlen(copy), 0, cfg);
+
+            free(copy);
+        }
+    }
+}

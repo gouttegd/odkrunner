@@ -40,6 +40,9 @@ extern "C" {
 int
 load_run_conf(odk_run_config_t *);
 
+void
+load_conf_from_env(odk_run_config_t *);
+
 #ifdef __cplusplus
 }
 #endif

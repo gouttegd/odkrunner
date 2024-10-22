@@ -456,6 +456,7 @@ main(int argc, char **argv)
 
     if ( load_run_conf(&cfg) == -1 )
         err(EXIT_FAILURE, "Cannot load run.sh.conf");
+    load_conf_from_env(&cfg);
 
     if ( optind < argc && strcmp("seed", argv[optind]) == 0 ) {
         cfg.flags |= ODK_FLAG_SEEDMODE;
