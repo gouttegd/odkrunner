@@ -278,6 +278,79 @@ set_work_directory(odk_run_config_t *cfg)
         err(EXIT_FAILURE, "Cannot bind directory '%s'", cwd);
 }
 
+/* Pass proxy informations to the container. */
+static char *
+get_host_and_port(const char *str, char **port)
+{
+    char *colon, *host;
+
+    if ( ! strchr(str, ':') )
+        return (char *)str;
+
+    if ( strncmp("http://", str, 7) == 0 )
+        host = mr_strdup(NULL, str + 7);
+    else if ( strncmp("https://", str, 8) == 0 )
+        host = mr_strdup(NULL, str + 8);
+    else
+        host = mr_strdup(NULL, str);
+
+    if ( (colon = strrchr(host, ':')) ) {
+        *colon++ = '\0';
+        *port = colon;
+    }
+
+    return host;
+}
+
+static void
+set_http_proxy(odk_run_config_t *cfg)
+{
+    char *proxy, *no_proxy;
+
+    if ( (proxy = getenv("http_proxy")) || (proxy = getenv("HTTP_PROXY")) ) {
+        char *host, *port = NULL;
+
+        /* Re-export the variable into the container, for applications
+         * that know how to use it. */
+        odk_add_env_var(cfg, "http_proxy", proxy, ODK_NO_OVERWRITE);
+
+        /* Add system properties for Java applications. */
+        host = get_host_and_port(proxy, &port);
+        odk_add_java_property(cfg, "http.proxyHost", host, ODK_NO_OVERWRITE);
+        if ( port )
+            odk_add_java_property(cfg, "http.proxyPort", port, ODK_NO_OVERWRITE);
+    }
+
+    /* Same for HTTPS proxy */
+    if ( (proxy = getenv("https_proxy")) || (proxy = getenv("HTTPS_PROXY")) ) {
+        char *host, *port;
+
+        odk_add_env_var(cfg, "https_proxy", proxy, ODK_NO_OVERWRITE);
+
+        host = get_host_and_port(proxy, &port);
+        odk_add_java_property(cfg, "https.proxyHost", host, ODK_NO_OVERWRITE);
+        if ( port )
+            odk_add_java_property(cfg, "https.proxyPort", port, ODK_NO_OVERWRITE);
+    }
+
+    if ( (no_proxy = getenv("no_proxy")) || (no_proxy = getenv("NO_PROXY")) ) {
+        char *java_no_proxy, *p;
+
+        /* Likewise: first re-export the variable as it is... */
+        odk_add_env_var(cfg, "no_proxy", no_proxy, ODK_NO_OVERWRITE);
+
+        /* Then take care of Java. Annoyingly, Java expects the list
+         * of no-proxy hosts to be pipe-separated, rather than
+         * comma-separated. */
+        java_no_proxy = mr_strdup(NULL, no_proxy);
+        p = java_no_proxy;
+        while ( (p = strchr(p, ',')) )
+            *p++ = '|';
+
+        odk_add_java_property(cfg, "http.nonProxyHosts", java_no_proxy, ODK_NO_OVERWRITE);
+    }
+}
+
 
 /* Main function. */
 
@@ -399,11 +472,12 @@ main(int argc, char **argv)
             odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)), 0);
     }
 
-    if ( cfg.n_java_opts )
-        mr_register(NULL, odk_make_java_args(&cfg, 1), 1);
-
     set_work_directory(&cfg);
     set_github_token(&cfg);
+    set_http_proxy(&cfg);
+
+    if ( cfg.n_java_opts )
+        mr_register(NULL, odk_make_java_args(&cfg, 1), 1);
 
     if ( cfg.oak_cache_directory && share_oaklib_cache(&cfg, cfg.oak_cache_directory) == -1 )
         err(EXIT_FAILURE, "Cannot share OAK cache directory");
