@@ -93,6 +93,11 @@ Start a ODK container.\n");
         --owlapi-option NAME=VALUE\n\
                         Pass an option to the OWLAPI library. To list\n\
                         available options, use '--owlapi-option=help'.\n\
+    -m, --java-mem MEM  Set the maximal amount of memory that Java\n\
+                        applications are allowed to use. MEM should be\n\
+                        of the form Xm, Xg, or X%, to specify an amount\n\
+                        in MB, GB, or as a fraction of the available\n\
+                        memory. The default value is 90%.\n\
     -k, --oak-cache [user|repo|PATH]\n\
                         Share a OAK cache directory with the container.\n\
     -K, --oak-user-cache\n\
@@ -351,6 +356,43 @@ set_http_proxy(odk_run_config_t *cfg)
     }
 }
 
+/* Set the maximal amount of memory for Java applications. */
+static void
+set_max_java_mem(odk_run_config_t *cfg, long total_memory, const char *requested)
+{
+    size_t amount = 0;
+    char unit;
+
+    if ( requested ) {
+        /* The user explicitly requested a given amount. In this context
+         * any error is fatal. */
+
+        if ( sscanf(requested, "%zu%c", &amount, &unit) != 2 )
+            errx(EXIT_FAILURE, "Invalid value for --java-mem option: %s", requested);
+
+        if ( unit == '%' ) {
+            if ( total_memory == 0 )
+                errx(EXIT_FAILURE, "Could not get memory information from backend");
+
+            amount = (total_memory * (amount / 100.0)) / (1024 * 1024 * 1024);
+            unit = 'G';
+        }
+
+        if ( unit != 'm' && unit != 'M' && unit != 'g' && unit != 'G' )
+            errx(EXIT_FAILURE, "Invalid value for --java-mem option: %s", requested);
+
+    } else if ( (cfg->flags & ODK_FLAG_JAVAMEMSET) == 0 && total_memory > 0 ) {
+        /* Nothing requested from the command line. Unless we already
+         * got a setting from the environment or the run.sh.conf file,
+         * we default to 90% of available memory if possible. */
+        amount = (total_memory * 0.9) / (1024 * 1024 * 1024);
+        unit = 'G';
+    }
+
+    if ( amount > 0 )
+        odk_add_java_opt(cfg, mr_sprintf(NULL, "-Xmx%lu%c", amount, unit), 0);
+}
+
 
 /* Main function. */
 
@@ -359,7 +401,7 @@ main(int argc, char **argv)
 {
     int c;
     int ret = 0;
-    char *opt_value;
+    char *opt_value, *java_mem = NULL;
     odk_run_config_t cfg;
     odk_backend_t backend = { 0 };
     odk_backend_init backend_init = odk_backend_docker_init;
@@ -376,6 +418,7 @@ main(int argc, char **argv)
         { "env",            1, NULL, 'e' },
         { "oak-cache",      1, NULL, 'k' },
         { "oak-user-cache", 0, NULL, 'K' },
+        { "java-mem",       1, NULL, 'm' },
         { "root",           0, NULL, 256 },
         { "owlapi-option",  1, NULL, 257 },
         { "java-property",  1, NULL, 258 },
@@ -387,7 +430,7 @@ main(int argc, char **argv)
 
     odk_init_config(&cfg);
 
-    while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:k:K", options, NULL)) != -1 ) {
+    while ( (c = getopt_long(argc, argv, "+hvdi:t:lsne:k:Km:", options, NULL)) != -1 ) {
         switch ( c ) {
         case 'h':
             usage(EXIT_SUCCESS);
@@ -434,6 +477,10 @@ main(int argc, char **argv)
             odk_set_oak_cache_directory(&cfg, "user", 0);
             break;
 
+        case 'm':
+            java_mem = optarg;
+            break;
+
         case 256:
             cfg.flags |= ODK_FLAG_RUNASROOT;
             break;
@@ -467,12 +514,7 @@ main(int argc, char **argv)
     if ( backend_init(&backend) == -1 )
         err(EXIT_FAILURE, "Cannot initialise backend");
 
-    if ( backend.info.total_memory > 0 && (cfg.flags & ODK_FLAG_JAVAMEMSET) == 0 ) {
-        unsigned long java_mem = backend.info.total_memory * 0.9;
-        if ( java_mem > 1024*1024*1024 )
-            odk_add_java_opt(&cfg, mr_sprintf(NULL, "-Xmx%luG", java_mem / (1024*1024*1024)), 0);
-    }
-
+    set_max_java_mem(&cfg, backend.info.total_memory, java_mem);
     set_work_directory(&cfg);
     set_github_token(&cfg);
     set_http_proxy(&cfg);

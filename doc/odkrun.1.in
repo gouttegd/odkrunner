@@ -22,6 +22,8 @@ odkrun - ODK Runner tool
 .IR name=value ]
 .RB [ --owlapi-option
 .IR name=value ]
+.RB [ -m | --java-mem
+.IR value ]
 .RB [ -k | --oak-cache
 .IR cache ]
 .RB [ -K | --oak-user-cache ]
@@ -83,6 +85,15 @@ within the container.
 .BR --owlapi-option " " \fIname=value\fR
 Pass an option to the OWLAPI library. To list available
 options, use \fI--owlapi-option=help\fR.
+.TP
+.BR -m ", " --java-mem " " \fIvalue\fR
+Set the maximal amount of memory that Java applications are
+allowed to use. The amount can be specified in megabytes
+(if \fIvalue\fR is suffixed with \fIm\fR or \fIM\fR), in
+gigabytes (if \fIvalue\fR is suffixed with \fIg\fR or
+\fIG\fR), or as a percentage of the total memory available
+to the backend (if \fIvalue\fR is suffixed with \fI%\fR).
+The default is \fI90%\fR.
 .TP
 .BR -k ", " --oak-cache " " \fIcache\fR
 Share the specified directory as a OAK cache directory

@@ -251,8 +251,8 @@ odk_add_env_var(odk_run_config_t *cfg, const char *name, const char *value, int 
  * @param option The option to add; this should be a valid option as
  *               expected by the java command. The pointer must remain
  *               valid for the lifetime of the configuration.
- * @param flags  Currently unused (ODK_NO_OVERWRITE has no effect, as
- *               Java options have no value to overwrite).
+ * @param flags  If ODK_NO_OVERWRITE is set and the option is -Xmx, do
+ *               not overwrite any previously set -Xmx option.
  */
 void
 odk_add_java_opt(odk_run_config_t *cfg, const char *option, int flags)
@@ -260,8 +260,23 @@ odk_add_java_opt(odk_run_config_t *cfg, const char *option, int flags)
     assert(cfg != NULL);
     assert(option != NULL);
 
-    if ( strncmp(option, "-Xmx", 4) == 0 )
+    if ( strncmp(option, "-Xmx", 4) == 0 ) {
+        if ( (cfg->flags & ODK_FLAG_JAVAMEMSET) > 0 ) {
+            if ( (flags & ODK_NO_OVERWRITE) == 0 ) {
+                /* Replace previous value. */
+                for ( unsigned i = 0; i < cfg->n_java_opts; i++ ) {
+                    if ( strncmp(cfg->java_opts[i].name, "-Xmx", 4) == 0 ) {
+                        cfg->java_opts[i].name = option;
+                        break;
+                    }
+                }
+            }
+
+            return;
+        }
+
         cfg->flags |= ODK_FLAG_JAVAMEMSET;
+    }
 
     add_var(&(cfg->java_opts), &(cfg->n_java_opts), option, NULL, flags);
 }
