@@ -6,8 +6,6 @@ Development Kit](https://github.com/INCATools/ontology-development-kit).
 That is, a program that could replace the `run.sh` and `run.bat` scripts
 used to invoke the ODK.
 
-Very experimental, do not use in production, etc.
-
 Rationale for a binary runner
 -----------------------------
 * We need a single runner that works across all the platforms supported
@@ -26,6 +24,25 @@ Since the runner is a binary program, we need to provide different
 versions for each system, but at least those versions are compiled from
 the same source code, so there is still only one runner to maintain even
 if there are three different binaries to provide.
+
+Installation (pre-compiled binaries)
+------------------------------------
+(For an installation from source, see the ”Building” section below.)
+
+From the page of the [last
+release](https://github.com/gouttegd/odkrunner/releases/latest),
+download the appropriate binary for your system:
+
+* `odkrun-linux` for GNU/Linux (x86_64);
+* `odkrun-macos` for macOS (x86_64 and arm64);
+* `odkrun.exe` for Windows (x86_64).
+
+For the GNU/Linux and macOS versions, rename the downloaded binary to
+`odkrun`.
+
+Place the binary in a directory that is listed in your system’s `PATH`
+variable. Check that you can call `odkrun --version` in a terminal and
+get the program’s version message.
 
 Usage
 -----
@@ -128,9 +145,9 @@ option at configure time to change that:
 $ ./configure --with-min-osx-version=11.0
 ```
 
-Building for macOS under GNU/Linux hs been tested to work with the
+Building for macOS under GNU/Linux has been tested to work with the
 [OSXCross](https://github.com/tpoechtrager/osxcross) cross-compiling
-environmen. With OSXCross installed and its binaries in the `PATH`, the
+environment. With OSXCross installed and its binaries in the `PATH`, the
 ODK Runner may be built with:
 
 ```sh

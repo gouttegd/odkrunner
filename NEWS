@@ -1,3 +1,12 @@
+Changes in odkrunner 0.3.0 (2024-10-24)
+---------------------------------------
+
+    * Allow configuration through ODK_ environment variables
+      (not recommended, but for compatibility with run.sh script).
+    * Add the --java-mem option to explicitly set Java -Xmx option.
+    * Automatically pass HTTP proxy settings to the container.
+
+
 Changes in odkrunner 0.2.1 (2024-10-21)
 ---------------------------------------
 
