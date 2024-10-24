@@ -348,7 +348,7 @@ odk_make_java_args(odk_run_config_t *cfg, int to_env)
     }
 
     if ( to_env ) {
-        odk_add_env_var(cfg, "ODK_JAVA_OPTS", buffer, 0);
+        odk_add_env_var(cfg, "JAVA_OPTS", buffer, 0);
         odk_add_env_var(cfg, "ROBOT_JAVA_ARGS", buffer, 0);
     }
 
