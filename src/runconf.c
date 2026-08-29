@@ -191,6 +191,13 @@ process_line(char *line, size_t len, size_t lineno, odk_run_config_t *cfg)
                     cfg->flags |= ODK_FLAG_RUNASROOT;
                 else
                     DO_WARN("Ignoring \"ODK_USER_ID\" with value other than 0 (%s)", value);
+            } else if ( strcmp(line, "ODK_DOCKER_OPTIONS") == 0 ) {
+                char *token;
+
+                while ( (token = strtok(value, " ")) ) {
+                    odk_add_backend_option(cfg, mr_strdup(NULL, token));
+                    value = NULL;
+                }
             } else
                 /* Pass any other option as an environment variable */
                 odk_add_env_var(cfg, mr_strdup(NULL, line), mr_strdup(NULL, value), ODK_NO_OVERWRITE);

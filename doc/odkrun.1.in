@@ -169,6 +169,9 @@ syntax.
 .TP
 .B ODK_USER_ID=0
 Equivalent to the \fI--root\fR option.
+.TP
+.B ODK_DOCKER_OPTIONS=\fIoptions\fR
+Allows passing arbitrary options to the Docker backend.
 .PP
 Any other option found in the configuration file is
 passed verbatim to the ODK container as an environment

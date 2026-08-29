@@ -96,7 +96,7 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
     image_qualifier = strchr(cfg->image_name, '/') ? "" : "obolibrary/";
 
     /* Number of tokens in the command line */
-    n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2);
+    n = 9 + (cfg->n_bindings * 2) + (cfg->n_env_vars * 2) + cfg->n_backend_opts;
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG )
         n += 3;
     if ( cfg->flags & ODK_FLAG_SEEDMODE )
@@ -122,6 +122,8 @@ run(odk_backend_t *backend, odk_run_config_t *cfg, char **command)
             argv[i++] = mr_sprintf(&mr, "%s=%s", cfg->env_vars[j].name, cfg->env_vars[j].value);
         }
     }
+    for ( int j = 0; j < cfg->n_backend_opts; j++ )
+        argv[i++] = (char *)cfg->backend_opts[j].name;
     argv[i++] = mr_sprintf(&mr, "%s%s:%s", image_qualifier, cfg->image_name, cfg->image_tag);
     if ( cfg->flags & ODK_FLAG_TIMEDEBUG ) {
         argv[i++] = "/usr/bin/time";

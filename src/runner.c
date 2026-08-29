@@ -65,6 +65,8 @@ odk_init_config(odk_run_config_t *cfg)
     cfg->n_env_vars = 0;
     cfg->java_opts = NULL;
     cfg->n_java_opts = 0;
+    cfg->backend_opts = NULL;
+    cfg->n_backend_opts = 0;
     cfg->oak_cache_directory = DEFAULT_OAK_CACHE;
     cfg->flags = 0;
 }
@@ -97,6 +99,12 @@ odk_free_config(odk_run_config_t *cfg)
         free(cfg->java_opts);
         cfg->java_opts = NULL;
         cfg->n_java_opts = 0;
+    }
+
+    if ( cfg->backend_opts ) {
+        free(cfg->backend_opts);
+        cfg->backend_opts = NULL;
+        cfg->n_backend_opts = 0;
     }
 }
 
@@ -353,4 +361,21 @@ odk_make_java_args(odk_run_config_t *cfg, int to_env)
     }
 
     return buffer;
+}
+
+/**
+ * Adds a new backend option to the configuration.
+ *
+ * @param cfg    The ODK configuration to update.
+ * @param option The option to add; this should be a valid option as
+ *               expected by the backend. The pointer must remain valid
+ *               for the lifetime of the configuration.
+ */
+void
+odk_add_backend_option(odk_run_config_t *cfg, const char *option)
+{
+    assert(cfg != NULL);
+    assert(option != NULL);
+
+    add_var(&(cfg->backend_opts), &(cfg->n_backend_opts), option, NULL, 0);
 }

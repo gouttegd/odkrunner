@@ -54,6 +54,8 @@ typedef struct odk_run_config {
     size_t              n_env_vars;
     odk_var_t          *java_opts;
     size_t              n_java_opts;
+    odk_var_t          *backend_opts;
+    size_t              n_backend_opts;
     const char         *oak_cache_directory;
     unsigned            flags;
 } odk_run_config_t;
@@ -99,6 +101,9 @@ odk_add_java_property(odk_run_config_t *, const char *, const char *, int);
 
 char *
 odk_make_java_args(odk_run_config_t *, int);
+
+void
+odk_add_backend_option(odk_run_config_t *, const char *);
 
 #ifdef __cplusplus
 }
