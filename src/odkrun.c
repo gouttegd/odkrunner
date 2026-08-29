@@ -1,6 +1,6 @@
 /*
  * ODK Runner
- * Copyright (C) 2024,2025 Damien Goutte-Gattat
+ * Copyright (C) 2024,2025,2026 Damien Goutte-Gattat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,7 +118,7 @@ info(void)
 {
     printf("\
 odkrun %s\n\
-Copyright (C) 2025 Damien Goutte-Gattat\n\
+Copyright (C) 2026 Damien Goutte-Gattat\n\
 \n\
 This program is released under the 3-clause BSD license.\n\
 See the COPYING file for more details.\n\

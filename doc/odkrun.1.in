@@ -1,4 +1,4 @@
-.TH ODKRUN 1 2025-12-17 "odkrun @PACKAGE_VERSION@"
+.TH ODKRUN 1 2026-08-29 "odkrun @PACKAGE_VERSION@"
 
 .SH NAME
 odkrun - ODK Runner tool
@@ -187,7 +187,7 @@ Damien Goutte-Gattat
 .SH COPYRIGHT
 .ad l
 .PP
-Copyright \(co 2024,2025 Damien Goutte-Gattat
+Copyright \(co 2024,2025,2026 Damien Goutte-Gattat
 .PP
 This program is released under the 3-clause BSD license.
 See the COPYING file in the source distribution.
